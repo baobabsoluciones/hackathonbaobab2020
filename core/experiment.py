@@ -23,7 +23,8 @@ class Experiment(object):
     def check_solution(self, list_tests=None, **params):
         func_list = dict(
             successors = self.check_successors,
-            resources = self.check_resources,
+            resources_nr = self.check_resources_nonrenewable,
+            resources_r=self.check_resources_renewable,
             all_jobs_once = self.all_jobs_once,
         )
         if list_tests is None:
@@ -52,9 +53,8 @@ class Experiment(object):
         usage = self.instance.data['needs']
         resource_usage = sol_mode.kvapply(lambda k, v: usage[k][v])
         avail = self.instance.data['resources'].get_property('available')
-        renewable_res = avail.kfilter(lambda k: k[0]=='R').keys()
+        renewable_res = self.instance.get_renewable_resources()
         resource_usage_N = resource_usage.to_dictup().to_tuplist().to_dict(result_col=2, indices=[1]).vapply(sum)
-        # TODO types should be in input data
         error_N = \
             resource_usage_N.kfilter(lambda k: k not in renewable_res).\
             kvapply(lambda k, v: avail[k] - v).\
@@ -66,11 +66,10 @@ class Experiment(object):
         usage = self.instance.data['needs']
         resource_usage = sol_mode.kvapply(lambda k, v: usage[k][v])
         avail = self.instance.data['resources'].get_property('available')
-        renewable_res = avail.kfilter(lambda k: k[0]=='R').keys()
+        renewable_res = self.instance.get_renewable_resources()
         sol_start = self.get_start_times()
         sol_finished = self.get_finished_times()
         job_periods = sol_start.sapply(func=range, other=sol_finished)
-        # TODO types should be in input data
         makespan = self.get_objective()
         consumption_rt = \
             pt.SuperDict({(r, t): 0 for r in renewable_res for t in range(makespan+1)})

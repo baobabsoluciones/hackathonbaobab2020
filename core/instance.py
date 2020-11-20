@@ -87,5 +87,8 @@ class Instance(object):
         with open(path, 'w') as f:
             json.dump(data, f, indent=4, sort_keys=True)
 
+    def get_renewable_resources(self):
+        return self.data['resources'].kfilter(lambda k: k[0]=='R').keys()
+
     def graph(self):
         pass
