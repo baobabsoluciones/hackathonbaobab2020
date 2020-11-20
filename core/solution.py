@@ -1,6 +1,6 @@
 import pytups as pt
 import json
-from .aux import dict_to_list
+from .tools import dict_to_list
 
 
 class Solution(object):

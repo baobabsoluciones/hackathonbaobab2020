@@ -1,7 +1,6 @@
 import pytups as pt
 import re
 import json
-from .aux import dict_to_list
 
 
 class Instance(object):
