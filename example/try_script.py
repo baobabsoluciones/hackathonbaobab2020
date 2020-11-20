@@ -8,6 +8,7 @@ def solve_example_problem_json():
     instance_name = 'c1564_3'
     path = '{}c15.mm/{}.mm'.format(directory, instance_name)
     instance = Instance.from_mm(path)
+    data = instance.get_input_data()
     exp = Algorithm(instance=instance)
     exp.solve({})
     print(exp.check_solution())
@@ -19,6 +20,7 @@ def solve_example_problem_json():
     exp.instance.to_json(path_in)
     exp.solution.to_json(path_out)
     exp.instance.from_json(path_in)
+    print(exp.instance.from_json(path_in))
     exp.solution.from_json(path_out)
 
 

@@ -60,6 +60,51 @@ class Instance(object):
         data = dict(resources=availability, jobs=successors, durations=durations.to_dictdict(),
                     needs=needs.to_dictdict())
         return cls(data)
+    
+    def format_data(self):
+        res = self.data['resources'].values_l()
+        job = self.data['jobs'].values_l()
+        duration =self.data['durations'].to_dictup().to_tuplist().vapply(lambda v: pt.SuperDict(job=v[0], mode=v[1], duration=v[2]))
+        needs = \
+            self.data['needs'].to_dictup().to_tuplist().\
+            vapply(lambda v: pt.SuperDict(job=v[0], mode=v[1],
+                                          resource=v[2],
+                                          need=v[3]))
+
+        data = pt.SuperDict(jobs=job, resources=res, needs=needs, durations=duration)
+        
+        return data
+    
+    def get_input_data(self):
+        
+        data = self.format_data()
+        print(data)
+        self.input_data = {}
+        
+        jobs = set([j["id"] for j in data["jobs"]])
+        periods = [p for p in range(140)]
+        resources = [r["id"] for r in data["resources"]]
+        modes = set([d["mode"] for d in data["durations"]])
+        resources_needs = {(n["job"], n["resource"], n["mode"]): n["need"] for n in data["needs"]}
+        # TODO: solve this problem here
+        jobs_precedence = [sum([(j["id"], i) for i in j["successors"]], []) for j in data["jobs"]]
+        jobs_durations = {(d["job"], d["mode"]): d["duration"] for d in data["durations"]}
+        total_resources = {r["id"]: r["available"] for r in data["resources"]}
+        
+        self.input_data["sJobs"] = {None: jobs}
+        self.input_data["sPeriods"] = {None: periods}
+        self.input_data["sRessources"] = {None: resources}
+        self.input_data["sModes"] = {None: modes}
+        self.input_data["sJobsPrecedence"] = {None: jobs_precedence}
+        self.input_data["sJobsModes"] = {None: jobs_durations.keys()}
+
+        self.input_data["pResourcesUsed"] = resources_needs
+        self.input_data["pDuration"] = jobs_durations
+        self.input_data["pMaxResources"] = total_resources
+        self.input_data["pWeightMakespan"] = {None: 1}
+        self.input_data["pWeightResources"] = {None: 0}
+        
+        return {None: self.input_data}
 
     @classmethod
     def from_json(cls, path):
@@ -70,6 +115,7 @@ class Instance(object):
         needs = pt.SuperDict({(v['job'], v['mode'], v['resource']): v['need'] for v in data_json['needs']})
         durations = pt.SuperDict({(v['job'], v['mode']): v['duration'] for v in data_json['durations']})
         data = pt.SuperDict(jobs=jobs, resources=res, needs=needs.to_dictdict(), durations=durations.to_dictdict())
+        print(data)
         return cls(data)
 
     def to_json(self, path):
