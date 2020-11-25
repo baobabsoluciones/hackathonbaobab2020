@@ -1,5 +1,5 @@
 from ortools.sat.python import cp_model
-from core.experiment import Experiment
+from core.experiment import Experiment, Solution
 import pytups as pt
 
 
@@ -13,42 +13,48 @@ class CPModel1(Experiment):
 
     def solve(self, options):
         model = cp_model.CpModel()
-        horizon = 1000
-        input_data = self.instance.data
+        input_data = pt.SuperDict.from_dict(self.instance.data)
+        max_dur_job = input_data['durations'].vapply(lambda v: max(v.values()))
+        horizon = sum(max_dur_job)
+        jobs_data = input_data['jobs']
+        durations_data = pt.SuperDict.from_dict(input_data['durations'])
+        needs_data = pt.SuperDict.from_dict(input_data['needs'])
+        mode_dictionary_to_values = lambda v: v.to_tuplist().sorted(key=lambda x: x[0]).take(1)
 
-        starts = pt.SuperDict()
-        ends = pt.SuperDict()
-        job_duration = pt.SuperDict()
-        job_mode = pt.SuperDict()
-        interval = pt.SuperDict()
-        job_consumption = pt.SuperDict()
-        for job in input_data['jobs']:
-            id = job
-            modes_durations = input_data['durations'][job]
-            needs = input_data['needs'][job]
-            starts[id] = model.NewIntVar(0, horizon, 'start_{}'.format(id))
-            ends[id] = model.NewIntVar(0, horizon, 'end_{}'.format(id))
-            job_mode[id] = model.NewIntVar(0, len(modes_durations)-1, 'mode_{}'.format(id))
-            job_duration[id] = model.NewIntVar(min(modes_durations.values()), max(modes_durations.values()), 'duration_{}'.format(id))
-            # mode_duration = []
-            # for mode, dur in modes.items():
-            #     mode_duration.append(
-            #         model.NewIntVar(dur, dur, 'mode_dur_{}_{}'.format(id, mode))
-            #     )
-            mode_duration = pt.SuperDict(modes_durations).to_tuplist().sorted(key=lambda x: x[0]).take(1)
-            model.AddElement(job_mode[id], mode_duration, job_duration[id])
-            interval[id] = model.NewIntervalVar(starts[id], job_duration[id], ends[id], 'interval_{}'.format(id))
-            modes_needs = \
-                pt.SuperDict(needs).to_dictup().to_tuplist().take([1, 0, 2]).to_dict(2, is_list=False).to_dictdict().\
-                    vapply(lambda v: v.to_tuplist().sorted(key=lambda x: x[0]).take(1))
-            for res, needs in modes_needs.items():
-                # if it does not demand the resource: no point modeling it
-                if not max(needs):
-                    continue
-                job_consumption[id, res] = \
-                    model.NewIntVar(min(needs), max(needs), 'consumption_{}_{}'.format(id, res))
-                model.AddElement(job_mode[id], needs, job_consumption[id, res])
+        # variable declaration:
+        starts = pt.SuperDict({job: model.NewIntVar(0, horizon, 'start_{}'.format(job)) for job in jobs_data})
+        ends = pt.SuperDict({job: model.NewIntVar(0, horizon, 'end_{}'.format(job)) for job in jobs_data})
+        job_mode = pt.SuperDict({job: model.NewIntVar(0, len(modes) - 1, 'mode_{}'.format(job))
+                                 for job, modes in durations_data.items()})
+        job_duration = pt.SuperDict({job: model.NewIntVar(min(modes.values()), max(modes.values()), 'duration_{}'.format(job))
+                                     for job, modes in durations_data.items()})
+        interval = pt.SuperDict({job: model.NewIntervalVar(starts[job], job_duration[job], ends[job], 'interval_{}'.format(job))
+                                 for job in jobs_data})
+        mode_duration_perjob = durations_data.vapply(mode_dictionary_to_values)
+        # definition of job duration
+        [model.AddElement(job_mode[job], mode_duration_perjob[job], job_duration[job]) for job in jobs_data]
 
+        # for each job and resource:
+        # an array of consumptions (one per mode in order)
+        needs_data_perjob = \
+            needs_data. \
+                to_dictup(). \
+                to_tuplist(). \
+                take([0, 2, 1, 3]). \
+                to_dict([2, 3]). \
+                vapply(sorted). \
+                vapply(pt.TupList).vapply(lambda v: v.take(1))
+
+        # for each job and resource:
+        # a variable with the consumption
+        job_consumption = needs_data_perjob.kvapply(
+            lambda k, v: model.NewIntVar(min(v), max(v), 'consumption_{}_{}'.format(*k))
+        )
+        # definition of job consumption
+        for (job, res), needs in needs_data_perjob.items():
+            model.AddElement(job_mode[job], needs, job_consumption[job, res])
+
+        # succession needs to be guaranteed
         for job, job_data in input_data['jobs'].items():
             for successor in job_data['successors']:
                 model.Add(starts[successor] >= ends[job])
@@ -60,12 +66,12 @@ class CPModel1(Experiment):
             jobs, consumptions = zip(*job_consumption_per_res[resource].items_tl())
             relevant_intervals = [interval[j] for j in jobs]
             if resource in self.instance.get_renewable_resources():
-                # renewable resources we only by intervals
+                # renewable resources we use intervals to check them
                 model.AddCumulative(intervals=relevant_intervals, demands=consumptions, capacity=res_data['available'])
             else: # non renewable resources we sum all
                 model.Add(sum(consumptions) <= res_data['available'])
 
-        # objective
+        # we set the objective as the makespan
         obj_var = model.NewIntVar(0, horizon, 'makespan')
         model.AddMaxEquality(obj_var, ends.values())
         model.Minimize(obj_var)
@@ -73,6 +79,15 @@ class CPModel1(Experiment):
         solver = cp_model.CpSolver()
         status = solver.Solve(model)
         solver.Value(obj_var)
+        if status == cp_model.OPTIMAL:
+            print("Status: optimal")
+        start_sol = starts.vapply(solver.Value)
+        mode_sol = job_mode.vapply(lambda v: solver.Value(v) + 1)
+        _func = lambda x, y: dict(period=x, mode=y)
+        solution = start_sol.sapply(func=_func, other=mode_sol)
+        self.solution = Solution(solution)
+        return self.solution
+
 
 
 

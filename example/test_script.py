@@ -4,32 +4,37 @@ from solvers.cp_ortools import CPModel1
 import os
 
 
-def solve_example_problem_json():
+def solve_example_problem_json(dataset, instance_name, solver=''):
     directory = 'data/'
-    instance_name = 'c1564_3'
-    path = '{}c15.mm/{}.mm'.format(directory, instance_name)
+    path = '{}{}/{}.mm'.format(directory, dataset, instance_name)
     instance = Instance.from_mm(path)
-    exp = Algorithm(instance=instance)
+    if solver=='ORTOOLS':
+        exp = CPModel1(instance=instance)
+    else:
+        exp = Algorithm(instance=instance)
     exp.solve({})
+    print("Errors:")
     print(exp.check_solution())
-    path_solution = '{}solutions/c15.mm/{}'.format(directory, instance_name)
-    if not os.path.exists(path_solution):
-        os.mkdir(path_solution)
-    path_in = '{}/input.json'.format(path_solution)
-    path_out = '{}/output.json'.format(path_solution)
-    exp.instance.to_json(path_in)
-    exp.solution.to_json(path_out)
-    exp.instance.from_json(path_in)
-    exp.solution.from_json(path_out)
-
-def solve_cp_ortools():
-    directory = 'data/'
-    instance_name = 'c1564_3'
-    path = '{}c15.mm/{}.mm'.format(directory, instance_name)
-    instance = Instance.from_mm(path)
-    exp = CPModel1(instance=instance)
-    exp.solve({})
+    print("Objective function:")
+    print(exp.get_objective())
+    # path_solution = '{}solutions/{}/{}'.format(directory, dataset, instance_name)
+    # if not os.path.exists(path_solution):
+    #     os.mkdir(path_solution)
+    # path_in = '{}/input.json'.format(path_solution)
+    # path_out = '{}/output.json'.format(path_solution)
+    # exp.instance.to_json(path_in)
+    # exp.solution.to_json(path_out)
+    # exp.instance.from_json(path_in)
+    # exp.solution.from_json(path_out)
 
 
 if __name__ == '__main__':
-    solve_cp_ortools()
+    # dataset = 'j30.mm'
+    # instance_name = 'j3064_10'
+    # dataset = 'r5.mm'
+    # instance_name = 'r564_10'
+    dataset = 'm5.mm'
+    instance_name = 'm564_10'
+
+    solve_example_problem_json(dataset, instance_name, solver='')
+    solve_example_problem_json(dataset, instance_name, solver='ORTOOLS')
