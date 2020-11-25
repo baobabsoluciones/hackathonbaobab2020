@@ -1,5 +1,6 @@
 from core import Instance, Experiment
 from example.algorithm1 import Algorithm
+from solvers.cp_ortools import CPModel1
 import os
 
 
@@ -21,6 +22,14 @@ def solve_example_problem_json():
     exp.instance.from_json(path_in)
     exp.solution.from_json(path_out)
 
+def solve_cp_ortools():
+    directory = 'data/'
+    instance_name = 'c1564_3'
+    path = '{}c15.mm/{}.mm'.format(directory, instance_name)
+    instance = Instance.from_mm(path)
+    exp = CPModel1(instance=instance)
+    exp.solve({})
+
 
 if __name__ == '__main__':
-    solve_example_problem_json()
+    solve_cp_ortools()
