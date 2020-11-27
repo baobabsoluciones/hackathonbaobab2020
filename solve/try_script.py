@@ -10,7 +10,6 @@ def solve_example_problem_json():
     instance = Instance.from_mm(path)
     exp = Algorithm(instance=instance)
     exp.solve({})
-    print(exp.check_solution())
     path_solution = '{}solutions/c15.mm/{}'.format(directory, instance_name)
     if not os.path.exists(path_solution):
         os.mkdir(path_solution)

@@ -83,7 +83,7 @@ class Instance(object):
         self.input_data = {}
         
         jobs = list(set([j["id"] for j in data["jobs"]]))
-        periods = [p for p in range(140)]
+        periods = [p for p in range(50)]
         resources = [r["id"] for r in data["resources"]]
         modes = list(set([d["mode"] for d in data["durations"]]))
         resources_needs = {(n["job"], n["resource"], n["mode"]): n["need"] for n in data["needs"]}

@@ -15,6 +15,8 @@ def get_model():
     :return: a pyomo abstract model
     """
     
+    M = 1000
+    
     # Create model
     model = AbstractModel()
     
@@ -23,7 +25,7 @@ def get_model():
     model.sResources = Set()
     model.sModes = Set()
     model.sPeriods = Set()
-    model.sPairsPrecedence = Set()
+    #model.sPairsPrecedence = Set()
     model.sJobsPrecedence = Set(dimen=2)
     model.sJobsModes = Set(dimen=2)
     
@@ -38,19 +40,19 @@ def get_model():
     
     # Model variables
     model.v01Start = Var(model.sJobs, model.sPeriods, domain=Binary)
-    model.vStart = Var(model.sJobs, domain=NonNegativeIntegers)
     model.v01End = Var(model.sJobs, model.sPeriods, domain=Binary)
-    model.vEnd = Var(model.sJobs, domain=NonNegativeIntegers)
     model.v01Work = Var(model.sJobs, model.sPeriods, domain=Binary)
-    model.vResources = Var(model.sResources, model.sJobs, model.sPeriods, domain=NonNegativeIntegers)
     model.v01Mode = Var(model.sJobsModes, domain=Binary)
+    model.vStart = Var(model.sJobs, domain=NonNegativeIntegers)
+    model.vEnd = Var(model.sJobs, domain=NonNegativeIntegers)
+    model.vResources = Var(model.sResources, model.sJobs, model.sPeriods, domain=NonNegativeIntegers)
     model.vMakespan = Var(domain=Reals)
     
     
     # Constraints
     # c1:
-    def c1_start_consistency(model, iJob, iPeriod):
-        return model.vStart[iJob] == model.v01Start[iJob, iPeriod] * int(iPeriod)
+    def c1_start_consistency(model, iJob):
+        return model.vStart[iJob] == sum(model.v01Start[iJob, iPeriod] * int(iPeriod) for iPeriod in model.sPeriods)
     
     # c2:
     def c2_start_work_relation(model, iJob, iPeriod):
@@ -66,7 +68,7 @@ def get_model():
     
     # c5:
     def c5_durations(model, iJob):
-        return model.vEnd[iJob] >= model.vStart[iJob] +\
+        return model.vEnd[iJob] == model.vStart[iJob] +\
         sum(model.pDuration[iJob, iMode] * model.v01Mode[iJob, iMode] for iMode in model.sModes
             if (iJob, iMode) in model.sJobsModes)
     
@@ -77,7 +79,7 @@ def get_model():
     # c7: resources
     def c7_resource_allocation(model, iJob, iMode, iPeriod, iResource):
         return model.vResources[iResource, iJob, iPeriod] >= model.v01Work[iJob, iPeriod] * model.pResourcesUsed[
-            iJob, iResource, iMode] - 1000000 * (1 - model.v01Mode[iJob, iMode])
+            iJob, iResource, iMode] - M * (1 - model.v01Mode[iJob, iMode])
     
     # c8: maximum amount renewable resources
     def c8_max_r_resources(model, iResource, iPeriod):
@@ -90,11 +92,11 @@ def get_model():
     
     # c10: precedence
     def c10_precedence(model, iJob1, iJob2):
-        return model.vEnd[iJob1] < model.vStart[iJob2]
+        return model.vEnd[iJob1]  + 1 <= model.vStart[iJob2]
 
     def c11_continue_work(model, iJob, iPeriod):
         if iPeriod < max(model.sPeriods):
-            return model.v01Work[iJob, iPeriod + 1] >= model.v01Work[iJob, iPeriod + 1] - model.v01End[iJob, iPeriod]
+            return model.v01Work[iJob, iPeriod + 1] >= model.v01Work[iJob, iPeriod] - model.v01End[iJob, iPeriod]
         else:
             return Constraint.Skip
     
@@ -107,11 +109,11 @@ def get_model():
         -  the number of bus stops will be minimized. Stops belonging to an express route will not be considered
         -  the sum of distances between employees and bus stops will be minimized
         """
-        return model.pWeightMakespan * model.vMakespan
+        return model.pWeightMakespan * model.vMakespan + sum(model.v01Work[iJob, iPeriod] for iJob in model.sJobs for iPeriod in model.sPeriods)
     
     
     # Activate constraints
-    model.c1_start_consistency = Constraint(model.sJobs, model.sPeriods, rule=c1_start_consistency)
+    model.c1_start_consistency = Constraint(model.sJobs, rule=c1_start_consistency)
     model.c2_start_work_relation = Constraint(model.sJobs, model.sPeriods, rule=c2_start_work_relation)
     model.c3_amount_starts = Constraint(model.sJobs, rule=c3_amount_starts)
     model.c4_amount_ends = Constraint(model.sJobs, rule=c4_amount_ends)
@@ -121,7 +123,7 @@ def get_model():
                                               rule=c7_resource_allocation)
     model.c8_max_r_resources = Constraint(model.sResources, model.sPeriods, rule=c8_max_r_resources)
     model.c9_max_r_resources = Constraint(model.sResources, rule=c9_max_r_resources)
-    model.c10_precedence = Constraint(model.sPairsPrecedence, rule=c10_precedence)
+    model.c10_precedence = Constraint(model.sJobsPrecedence, rule=c10_precedence)
     model.c11_continue_work = Constraint(model.sJobs, model.sPeriods, rule=c11_continue_work)
     model.c12_amount_modes = Constraint(model.sJobs, rule=c12_amount_modes)
     

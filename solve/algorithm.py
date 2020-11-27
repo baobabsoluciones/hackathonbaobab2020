@@ -20,17 +20,24 @@ class Algorithm(Experiment):
         opt = SolverFactory('cbc')
         result = opt.solve(model_instance, tee=True)
         
-        self.status = result.solver.termination_condition
+        self.status = str(result.solver.termination_condition)
         self.model_solution = model_instance
-
-        self.model_solution.display()
-        
+        print(self.status)
+        #self.model_solution.display()
+        if self.status == "optimal":
+            self.print_instance()
+            
         data = self.format_solution()
         
         self.solution = Solution(data)
         
         return self.solution
-
+    
+    def print_instance(self):
+        print("printing instance")
+        with open("instance_display.txt", "w") as f:
+            self.model_solution.display(ostream=f)
+    pass
     
     def format_solution(self):
         
