@@ -1,2 +1,4 @@
 pytups
 click
+plotly
+pandas

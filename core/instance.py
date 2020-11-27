@@ -6,7 +6,7 @@ import json
 class Instance(object):
 
     def __init__(self, data):
-        self.data = data
+        self.data = pt.SuperDict.from_dict(data)
 
     @classmethod
     def from_mm(cls, path):
@@ -88,6 +88,3 @@ class Instance(object):
 
     def get_renewable_resources(self):
         return self.data['resources'].kfilter(lambda k: k[0]=='R').keys()
-
-    def graph(self):
-        pass
