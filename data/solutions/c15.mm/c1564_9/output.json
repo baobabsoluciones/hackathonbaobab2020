@@ -12,81 +12,81 @@
     {
         "job": 3,
         "mode": 1,
-        "period": 3
+        "period": 0
     },
     {
         "job": 4,
         "mode": 1,
-        "period": 7
+        "period": 0
     },
     {
         "job": 5,
         "mode": 1,
-        "period": 9
+        "period": 4
     },
     {
         "job": 6,
+        "mode": 1,
+        "period": 3
+    },
+    {
+        "job": 7,
+        "mode": 1,
+        "period": 12
+    },
+    {
+        "job": 8,
         "mode": 1,
         "period": 12
     },
     {
         "job": 9,
         "mode": 1,
-        "period": 21
-    },
-    {
-        "job": 7,
-        "mode": 1,
-        "period": 22
-    },
-    {
-        "job": 8,
-        "mode": 1,
-        "period": 23
+        "period": 3
     },
     {
         "job": 10,
         "mode": 1,
-        "period": 24
-    },
-    {
-        "job": 13,
-        "mode": 1,
-        "period": 25
-    },
-    {
-        "job": 14,
-        "mode": 1,
-        "period": 26
+        "period": 4
     },
     {
         "job": 11,
-        "mode": 1,
-        "period": 27
+        "mode": 2,
+        "period": 5
     },
     {
         "job": 12,
         "mode": 1,
-        "period": 29
+        "period": 13
+    },
+    {
+        "job": 13,
+        "mode": 1,
+        "period": 12
+    },
+    {
+        "job": 14,
+        "mode": 1,
+        "period": 7
     },
     {
         "job": 15,
         "mode": 1,
-        "period": 33
+        "period": 13
     },
     {
         "job": 16,
         "mode": 1,
-        "period": 39
+        "period": 17
     },
     {
         "job": 17,
-        "mode": 1,
-        "period": 41
+        "mode": 2,
+        "period": 13
     },
     {
         "job": 18,
         "mode": 1,
-        "period": 43
+        "period": 19
     }
 ]

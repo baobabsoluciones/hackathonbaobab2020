@@ -1,13 +1,15 @@
-from core import Instance, Experiment
+from core import Instance
 from example.algorithm1 import Algorithm
+from example.modelo_entero_inicializacion_algoritmo import Model
 import os
 
 
 def solve_example_problem_json(dataset, instance_name, solver=''):
-    directory = 'data/'
+    directory = '../data/'
     path = '{}{}/{}.mm'.format(directory, dataset, instance_name)
     instance = Instance.from_mm(path)
-    exp = Algorithm(instance=instance)
+    print(instance.__dict__)
+    exp = Model(instance=instance, algorithm=Algorithm(instance=instance))
     exp.solve({})
     print("Errors:")
     print(exp.check_solution())
@@ -19,8 +21,8 @@ if __name__ == '__main__':
     # instance_name = 'j3064_10'
     # dataset = 'r5.mm'
     # instance_name = 'r564_10'
-    dataset = 'm5.mm'
-    instance_name = 'm564_10'
+    dataset = 'c15.mm'
+    instance_name = 'c1564_9'
 
     # solve_example_problem_json(dataset, instance_name, solver='')
     exp = solve_example_problem_json(dataset, instance_name, solver='ORTOOLS')
