@@ -1,6 +1,5 @@
-from core import Instance, Experiment
-from example.algorithm1 import Algorithm
-import os
+from core import Instance
+from solvers.algorithm1 import Algorithm
 
 
 def solve_example_problem_json(dataset, instance_name, solver=''):
