@@ -17,8 +17,7 @@ class Experiment(object):
         solution = Solution.from_json(os.path.join(path, sol_file))
         return Experiment(instance, solution)
 
-    def solve(self, options):
-        raise NotImplementedError("complete this!")
+
 
     def check_solution(self, list_tests=None, **params):
         func_list = dict(

@@ -8,7 +8,7 @@ import pyomo
 import pyomo.opt
 from pyomo.environ import *
 
-def get_bus_stops_model():
+def get_model():
     """
     This function creates the pyomo bus stops location abstract model.
 ​
@@ -26,15 +26,11 @@ def get_bus_stops_model():
     model.sPairsPrecedence = Set()
     model.sJobsPrecedence = Set(dimen=2)
     model.sJobsModes = Set(dimen=2)
-
-    
-    # Model parameters
     
     # General parameters
     model.pResourcesUsed = Param(model.sJobs, model.sResources, model.sModes, mutable=True)
-    model.pDuration = Param(model.sJobsModes, model.sModes, mutable=True)
+    model.pDuration = Param(model.sJobsModes, mutable=True)
     model.pMaxResources = Param(model.sResources, mutable=True)
-    
     
     # Objective function parameters
     model.pWeightResources = Param(mutable=True)
@@ -45,6 +41,7 @@ def get_bus_stops_model():
     model.vStart = Var(model.sJobs, domain=NonNegativeIntegers)
     model.v01End = Var(model.sJobs, model.sPeriods, domain=Binary)
     model.vEnd = Var(model.sJobs, domain=NonNegativeIntegers)
+    model.v01Work = Var(model.sJobs, model.sPeriods, domain=Binary)
     model.vResources = Var(model.sResources, model.sJobs, model.sPeriods, domain=NonNegativeIntegers)
     model.v01Mode = Var(model.sJobsModes, domain=Binary)
     model.vMakespan = Var(domain=Reals)
@@ -69,15 +66,16 @@ def get_bus_stops_model():
     
     # c5:
     def c5_durations(model, iJob):
-        return model.vEnd[iJob] >= model.vStart[iJob] + sum(
-            model.pDuration[iJob, iMode] * model.v01Mode[iJob, iMode] for iMode in model.sModes)
+        return model.vEnd[iJob] >= model.vStart[iJob] +\
+        sum(model.pDuration[iJob, iMode] * model.v01Mode[iJob, iMode] for iMode in model.sModes
+            if (iJob, iMode) in model.sJobsModes)
     
     # c6: giving value to makespan
     def c6_makespan_value(model, iJob):
         return model.vMakespan >= model.vEnd[iJob]
     
     # c7: resources
-    def c7_resource_allocation(model, iJob, iPeriod, iMode, iResource):
+    def c7_resource_allocation(model, iJob, iMode, iPeriod, iResource):
         return model.vResources[iResource, iJob, iPeriod] >= model.v01Work[iJob, iPeriod] * model.pResourcesUsed[
             iJob, iResource, iMode] - 1000000 * (1 - model.v01Mode[iJob, iMode])
     
@@ -93,6 +91,15 @@ def get_bus_stops_model():
     # c10: precedence
     def c10_precedence(model, iJob1, iJob2):
         return model.vEnd[iJob1] < model.vStart[iJob2]
+
+    def c11_continue_work(model, iJob, iPeriod):
+        if iPeriod < max(model.sPeriods):
+            return model.v01Work[iJob, iPeriod + 1] >= model.v01Work[iJob, iPeriod + 1] - model.v01End[iJob, iPeriod]
+        else:
+            return Constraint.Skip
+    
+    def c12_amount_modes(model, iJob):
+        return sum(model.v01Mode[iJob, iMode] for iMode in model.sModes if (iJob, iMode) in model.sJobsModes) == 1
     
     # Objective function
     def obj_expression(model):
@@ -110,11 +117,13 @@ def get_bus_stops_model():
     model.c4_amount_ends = Constraint(model.sJobs, rule=c4_amount_ends)
     model.c5_durations = Constraint(model.sJobs, rule=c5_durations)
     model.c6_makespan_value = Constraint(model.sJobs, rule=c6_makespan_value)
-    model.c7_resource_allocation = Constraint(model.sJobs, model.sPeriods, model.sModes, model.sResources,
+    model.c7_resource_allocation = Constraint(model.sJobsModes, model.sPeriods, model.sResources,
                                               rule=c7_resource_allocation)
     model.c8_max_r_resources = Constraint(model.sResources, model.sPeriods, rule=c8_max_r_resources)
     model.c9_max_r_resources = Constraint(model.sResources, rule=c9_max_r_resources)
     model.c10_precedence = Constraint(model.sPairsPrecedence, rule=c10_precedence)
+    model.c11_continue_work = Constraint(model.sJobs, model.sPeriods, rule=c11_continue_work)
+    model.c12_amount_modes = Constraint(model.sJobs, rule=c12_amount_modes)
     
     # Add objective function
     model.f_obj = Objective(rule=obj_expression, sense=minimize)

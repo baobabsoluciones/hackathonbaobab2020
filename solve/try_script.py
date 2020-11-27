@@ -1,5 +1,5 @@
 from core import Instance, Experiment
-from example.algorithm1 import Algorithm
+from solve.algorithm import Algorithm
 import os
 
 
@@ -8,7 +8,6 @@ def solve_example_problem_json():
     instance_name = 'c1564_3'
     path = '{}c15.mm/{}.mm'.format(directory, instance_name)
     instance = Instance.from_mm(path)
-    data = instance.get_input_data()
     exp = Algorithm(instance=instance)
     exp.solve({})
     print(exp.check_solution())

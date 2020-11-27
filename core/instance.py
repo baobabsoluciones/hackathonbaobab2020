@@ -64,7 +64,8 @@ class Instance(object):
     def format_data(self):
         res = self.data['resources'].values_l()
         job = self.data['jobs'].values_l()
-        duration =self.data['durations'].to_dictup().to_tuplist().vapply(lambda v: pt.SuperDict(job=v[0], mode=v[1], duration=v[2]))
+        duration =self.data['durations'].to_dictup().to_tuplist().\
+            vapply(lambda v: pt.SuperDict(job=v[0], mode=v[1], duration=v[2]))
         needs = \
             self.data['needs'].to_dictup().to_tuplist().\
             vapply(lambda v: pt.SuperDict(job=v[0], mode=v[1],
@@ -81,23 +82,25 @@ class Instance(object):
         print(data)
         self.input_data = {}
         
-        jobs = set([j["id"] for j in data["jobs"]])
+        jobs = list(set([j["id"] for j in data["jobs"]]))
         periods = [p for p in range(140)]
         resources = [r["id"] for r in data["resources"]]
-        modes = set([d["mode"] for d in data["durations"]])
+        modes = list(set([d["mode"] for d in data["durations"]]))
         resources_needs = {(n["job"], n["resource"], n["mode"]): n["need"] for n in data["needs"]}
-        # TODO: solve this problem here
-        jobs_precedence = [sum([(j["id"], i) for i in j["successors"]], []) for j in data["jobs"]]
+        jobs_precedence_1 = [(j["id"], j["successors"]) for j in data["jobs"]]
+        jobs_precedence = sum([[(a, c) for c in b] for (a,b) in jobs_precedence_1], [])
+
         jobs_durations = {(d["job"], d["mode"]): d["duration"] for d in data["durations"]}
         total_resources = {r["id"]: r["available"] for r in data["resources"]}
-        
+
         self.input_data["sJobs"] = {None: jobs}
         self.input_data["sPeriods"] = {None: periods}
-        self.input_data["sRessources"] = {None: resources}
+        self.input_data["sResources"] = {None: resources}
         self.input_data["sModes"] = {None: modes}
         self.input_data["sJobsPrecedence"] = {None: jobs_precedence}
-        self.input_data["sJobsModes"] = {None: jobs_durations.keys()}
-
+        self.input_data["sJobsModes"] = {None: [i for i in jobs_durations.keys()]}
+        print(self.input_data["sJobsModes"])
+        print(jobs_durations)
         self.input_data["pResourcesUsed"] = resources_needs
         self.input_data["pDuration"] = jobs_durations
         self.input_data["pMaxResources"] = total_resources

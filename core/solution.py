@@ -8,7 +8,7 @@ class Solution(object):
     def __init__(self, data):
         # data is, for each job, a time and a mode.
         # {job: period=(int), mode=(int)}
-        self.data = data
+        self.data = pt.SuperDict.from_dict(data)
         return
 
     @classmethod
