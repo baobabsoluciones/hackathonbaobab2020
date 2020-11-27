@@ -26,3 +26,4 @@ class Solution(object):
         with open(path, 'w') as f:
             json.dump(data_json, f, indent=4, sort_keys=True)
         return
+
