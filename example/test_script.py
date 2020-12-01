@@ -13,6 +13,8 @@ def solve_example_problem_json(dataset, instance_name, solver=''):
     print("Objective function:")
     print(exp.get_objective())
     return exp
+
+
 if __name__ == '__main__':
     # dataset = 'j30.mm'
     # instance_name = 'j3064_10'

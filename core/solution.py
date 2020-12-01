@@ -12,14 +12,18 @@ class Solution(object):
         return
 
     @classmethod
-    def from_json(cls, path):
-        with open(path, 'r') as f:
-            data_json = json.load(f)
+    def from_dict(cls, data_json):
         data = pt.SuperDict({v['job']:
                                  pt.SuperDict(period=v['period'],
                                               mode=v['mode']) for v in data_json}
                             )
         return cls(data)
+
+    @classmethod
+    def from_json(cls, path):
+        with open(path, 'r') as f:
+            data_json = json.load(f)
+        return cls.from_dict(data_json)
 
     def to_json(self, path):
         data_json = dict_to_list(self.data, 'job')

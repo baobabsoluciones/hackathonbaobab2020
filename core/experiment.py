@@ -2,6 +2,7 @@ import pytups as pt
 import os
 from .instance import Instance
 from .solution import Solution
+from . import tools as di
 
 
 class Experiment(object):
@@ -14,8 +15,22 @@ class Experiment(object):
     @classmethod
     def from_json(cls, path, inst_file='input.json', sol_file='output.json'):
         instance = Instance.from_json(os.path.join(path, inst_file))
-        solution = Solution.from_json(os.path.join(path, sol_file))
-        return Experiment(instance, solution)
+        if os.path.exists(os.path.join(path, sol_file)):
+            solution = Solution.from_json(os.path.join(path, sol_file))
+        else:
+            solution = None
+        return cls(instance, solution)
+
+    @classmethod
+    def from_zipped_json(cls, zipobj, path, inst_file='input.json', sol_file='output.json'):
+        instance = di.load_data_zip(zipobj, os.path.join(path, inst_file))
+        instance = Instance.from_dict(instance)
+        try:
+            solution = di.load_data_zip(zipobj, os.path.join(path, sol_file))
+            solution = Solution.from_dict(solution)
+        except:
+            solution = None
+        return cls(instance, solution)
 
     def solve(self, options):
         raise NotImplementedError("complete this!")
