@@ -1,5 +1,3 @@
-from core import Instance, Experiment
-from example.algorithm1 import Algorithm
 import click
 
 

@@ -2,6 +2,7 @@ import pytups as pt
 import os
 from .instance import Instance
 from .solution import Solution
+from . import tools as di
 
 
 class Experiment(object):
@@ -14,8 +15,22 @@ class Experiment(object):
     @classmethod
     def from_json(cls, path, inst_file='input.json', sol_file='output.json'):
         instance = Instance.from_json(os.path.join(path, inst_file))
-        solution = Solution.from_json(os.path.join(path, sol_file))
-        return Experiment(instance, solution)
+        if os.path.exists(os.path.join(path, sol_file)):
+            solution = Solution.from_json(os.path.join(path, sol_file))
+        else:
+            solution = None
+        return cls(instance, solution)
+
+    @classmethod
+    def from_zipped_json(cls, zipobj, path, inst_file='input.json', sol_file='output.json'):
+        instance = di.load_data_zip(zipobj, os.path.join(path, inst_file))
+        instance = Instance.from_dict(instance)
+        try:
+            solution = di.load_data_zip(zipobj, os.path.join(path, sol_file))
+            solution = Solution.from_dict(solution)
+        except:
+            solution = None
+        return cls(instance, solution)
 
     def solve(self, options):
         raise NotImplementedError("complete this!")
@@ -49,6 +64,7 @@ class Experiment(object):
         return errors
 
     def check_resources_nonrenewable(self, **params):
+        # non renewables are counted once per job
         sol_mode = self.get_modes()
         usage = self.instance.data['needs']
         resource_usage = sol_mode.kvapply(lambda k, v: usage[k][v])
@@ -101,3 +117,53 @@ class Experiment(object):
         sol_mode = self.solution.data.get_property('mode')
         durations = self.instance.data['durations']
         return sol_start.kvapply(lambda k, v: v + durations[k][sol_mode[k]])
+
+    def graph(self):
+        try:
+            import plotly as pt
+            import plotly.figure_factory as ff
+        except ImportError:
+            print("You need plotly to be able to plot!")
+
+        import plotly.express as px
+        input_data = self.instance.data
+        all_durations = input_data['durations']
+        jobs_data = input_data['jobs'].keys_tl()
+
+        output_data = self.solution.data
+        start = output_data.get_property('period')
+        mode = output_data.get_property('mode')
+        duration = jobs_data.to_dict(None).kapply(lambda k: all_durations[k][mode[k]])
+
+        color_per_mode = ['#4cb33d', '#00c8c3', '#31c9ff', '#878787', '#EFCC00']
+        colors = mode.vapply(lambda v: color_per_mode[v-1])
+        transf = lambda k, v: dict(Task=k, Start=start[k],
+                                   Finish=start[k]+v, Label=str(k), Mode=mode[k])
+        gantt_data = duration.kvapply(transf).values_tl()
+
+
+        filename = 'temp.html'
+        options = dict(show_colorbar=True, showgrid_x=True, title="Jobs!",
+                       bar_width=0.5, width=2000, height=1000)
+        # fig = px.timeline(gantt_data, x_start="Start", x_end="Finish", y="Task", color='Mode')
+        # fig.update_xaxes()
+        fig = ff.create_gantt(gantt_data, colors=colors, index_col='Task', **options)
+        fig['layout'].update(autosize=True, margin=dict(l=150), xaxis=dict(type='linear'))
+        fig.update_yaxes(autorange="reversed")  # otherwise tasks are listed from the bottom up
+        # for i in range(len(gantt_data)):
+        #     # task = gantt_data[i]['Resource']
+        #     mode = gantt_data[i]['Mode']
+        #     task = gantt_data[i]['Task']
+        #     text = 'job:{}<br>mode: {}'.format(task, mode)
+        #     fig["data"][i].update(text=text, hoverinfo="text")
+        fig.show()
+
+        # for i in gantt_data:
+        #     x_pos = (i['Finish'] - i['Start']) / 2 + i['Start']
+        #     [j['name'] for j in fig['data']] #if (j['name'] == i['Task'])]
+        #     for j in :
+        #         :
+        #             y_pos = (j['y'][0] + j['y'][1] + j['y'][2] + j['y'][3]) / 4
+        #         fig['layout']['annotations'] += tuple([dict(x=x_pos, y=y_pos, text=i['Label'], font={'color':'black'})])
+
+        # pt.offline.plot(fig, filename=filename, show_link=False, config=dict(responsive=True))
