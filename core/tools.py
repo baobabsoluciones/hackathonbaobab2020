@@ -44,6 +44,11 @@ def load_data_zip(zipobj, path, file_type='json'):
         return json.loads(data)
 
 
+def write_json(data, path):
+    with open(path, 'w') as f:
+        json.dump(data, f, indent=4, sort_keys=True)
+
+
 def parent_dirs(pathname, subdirs=None):
     """Return a set of all individual directories contained in a pathname
 

@@ -64,6 +64,7 @@ class Experiment(object):
         return errors
 
     def check_resources_nonrenewable(self, **params):
+        # non renewables are counted once per job
         sol_mode = self.get_modes()
         usage = self.instance.data['needs']
         resource_usage = sol_mode.kvapply(lambda k, v: usage[k][v])
