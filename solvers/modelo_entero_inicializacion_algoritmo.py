@@ -9,8 +9,6 @@ import pytups as pt
 class Model(Experiment):
 
     def __init__(self, instance, algorithm=None, solution=None):
-        if solution is None:
-            solution = {}
         super().__init__(instance, solution)
         self.formatted_data = {}
         self.algorithm = algorithm
@@ -35,6 +33,7 @@ class Model(Experiment):
         print(self.result)
         self.solution = Solution(self.format_solution())
         print(self.solution.data)
+        return self.result
 
     def prepare_data(self):
         self.formatted_data['sTasks'] = {None: [i for i in self.instance.data['jobs']]}
