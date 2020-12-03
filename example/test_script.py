@@ -1,7 +1,6 @@
 from core import Instance
 from example.algorithm1 import Algorithm
-from example.modelo_entero_inicializacion_algoritmo import Model
-import os
+from solvers.modelo_entero_inicializacion_algoritmo import Model
 
 
 def solve_example_problem_json(dataset, instance_name, solver=''):

@@ -2,3 +2,4 @@ pytups
 click
 plotly
 pandas
+pyomo
