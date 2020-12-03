@@ -6,8 +6,6 @@ import pytups as pt
 class CPModel1(Experiment):
 
     def __init__(self, instance, solution=None):
-        if solution is None:
-            solution = {}
         super().__init__(instance, solution)
         return
 
@@ -15,7 +13,7 @@ class CPModel1(Experiment):
         model = cp_model.CpModel()
         input_data = pt.SuperDict.from_dict(self.instance.data)
         max_dur_job = input_data['durations'].vapply(lambda v: max(v.values()))
-        horizon = sum(max_dur_job)
+        horizon = sum(max_dur_job) + 1
         jobs_data = input_data['jobs']
         durations_data = pt.SuperDict.from_dict(input_data['durations'])
         needs_data = pt.SuperDict.from_dict(input_data['needs'])
@@ -77,16 +75,16 @@ class CPModel1(Experiment):
         model.Minimize(obj_var)
 
         solver = cp_model.CpSolver()
+        solver.parameters.max_time_in_seconds = options.get('timeLimit', 10)
         status = solver.Solve(model)
-        solver.Value(obj_var)
-        if status == cp_model.OPTIMAL:
-            print("Status: optimal")
+        if status not in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
+            return status
         start_sol = starts.vapply(solver.Value)
         mode_sol = job_mode.vapply(lambda v: solver.Value(v) + 1)
         _func = lambda x, y: dict(period=x, mode=y)
         solution = start_sol.sapply(func=_func, other=mode_sol)
         self.solution = Solution(solution)
-        return self.solution
+        return status
 
 
 
