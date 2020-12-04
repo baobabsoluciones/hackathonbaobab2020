@@ -41,7 +41,7 @@ The command line app has three main ways to use it.
 
 ### To execute instances
 
-To get all possible commands just run::
+To get all possible commands just run:
 
     python main.py solve-scenarios --help
 
@@ -49,13 +49,13 @@ This assumes you have downloaded the zip `j30.mm.zip` of input instances and you
     
     python main.py solve-scenarios --directory=data --scenario=j30.mm.zip --solver=default --instance=j301_1.mm --no-test
 
-You can also solve multiple scenarios or multiple instances by passing the `--instances` and `--scenarios` options. Just be careful with the string format::
+You can also solve multiple scenarios or multiple instances by passing the `--instances` and `--scenarios` options. Just be careful with the string format:
 
     python main.py solve-scenarios --directory=data --scenarios='["c15.mm.zip", "c21.mm.zip", "j10.mm.zip", "j30.mm.zip", "m1.mm.zip", "m5.mm.zip", "n0.mm.zip", "n1.mm.zip", "n3.mm.zip", "r1.mm.zip", "r4.mm.zip", "r5.mm.zip"]' --solver=default
 
 Finally, if you pass the `zip` option you create a nice little zip at the end.
 
-The output format is always the same::
+The output format is always the same:
 
     solver_name/scenario_name/instance_name/(input, output, options)
 
@@ -63,11 +63,11 @@ The output format is always the same::
 
 You first need to have a zip with the results you want to get statistics from. For this, the easiest is to pass the `zip` option to the `solve-scenarios` function above.
 
-Then you do something like::
+Then you do something like:
 
     python main.py export-table --path=data/default.zip --path_out=data_default.csv
 
-And this generates a table in a csv with several columns: scenario,name,objective,solver,time,errors
+And this generates a table in a csv with several columns: scenario, name (instance), objective (function value), solver, (solving) time, (number of) errors (in the solution)
 
 ### To convert from one type of instance to another
 
