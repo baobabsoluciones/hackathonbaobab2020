@@ -25,15 +25,53 @@ venv/Scripts/activate
 pip install -r requirements.txt
 ```
 
-## Usage
+## How to add a new solver
 
-The command line use is still Work in Progress.
+These are the steps to add a solver and make it compatible with the command line and the python functions:
 
-```
-cd hackathonbaobab2020
-venv/Scripts/activate
-python main.py -ARGUMENTS
-```
+1. Add a file inside the `solvers` directory with a subclass of `core.experiment.Experiment` that implements, at least, the `solve()` method *with the same argument names*.
+1. Your `solve` method needs to return an integer with the status of the solving process. Current options are `{4: "Optimal", 2: "Feasible", 3: "Infeasible", 0: "Unknown"}`.
+1. Edit the `solvers/__init__.py` to import your solver and edit the `solvers` dictionary by giving your solver a name. 
+
+That's it!
+
+## Command line
+
+The command line app has three main ways to use it.
+
+### To execute instances
+
+To get all possible commands just run::
+
+    python main.py solve-scenarios --help
+
+This assumes you have downloaded the zip `j30.mm.zip` of input instances and you have stored it in the `data` directory. It solves instance `j301_1.mm`.
+    
+    python main.py solve-scenarios --directory=data --scenario=j30.mm.zip --solver=default --instance=j301_1.mm --no-test
+
+You can also solve multiple scenarios or multiple instances by passing the `--instances` and `--scenarios` options. Just be careful with the string format::
+
+    python main.py solve-scenarios --directory=data --scenarios='["c15.mm.zip", "c21.mm.zip", "j10.mm.zip", "j30.mm.zip", "m1.mm.zip", "m5.mm.zip", "n0.mm.zip", "n1.mm.zip", "n3.mm.zip", "r1.mm.zip", "r4.mm.zip", "r5.mm.zip"]' --solver=default
+
+Finally, if you pass the `zip` option you create a nice little zip at the end.
+
+The output format is always the same::
+
+    solver_name/scenario_name/instance_name/(input, output, options)
+
+### To get statistics from a solution
+
+You first need to have a zip with the results you want to get statistics from. For this, the easiest is to pass the `zip` option to the `solve-scenarios` function above.
+
+Then you do something like::
+
+    python main.py export-table --path=data/default.zip --path_out=data_default.csv
+
+And this generates a table in a csv with several columns: scenario,name,objective,solver,time,errors
+
+### To convert from one type of instance to another
+
+This can be particularly useful for the AIMMS people. And is not yet available.
 
 ## Code
 

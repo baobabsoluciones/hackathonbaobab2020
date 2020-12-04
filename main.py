@@ -54,5 +54,5 @@ if __name__ == '__main__':
 
 # python main.py solve-scenarios --directory=data --scenarios='["c15.mm.zip"]' --solver=default --test=1
 # python main.py solve-scenarios --directory=data --scenarios='["c15.mm.zip", "c21.mm.zip", "j10.mm.zip", "j30.mm.zip", "m1.mm.zip", "m5.mm.zip", "n0.mm.zip", "n1.mm.zip", "n3.mm.zip", "r1.mm.zip", "r4.mm.zip", "r5.mm.zip"]' --solver=default
-# python main.py solve-scenarios --directory=data --instance=j30.mm.zip/j301_1.mm --solver=ortools
+# python main.py solve-scenarios --directory=data --scenario=j30.mm.zip --solver=ortools --instance=j301_1.mm --no-test
 # python main.py export-table --path=data/default.zip --path_out=data_default.csv
