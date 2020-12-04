@@ -31,9 +31,9 @@ These are the steps to add a solver and make it compatible with the command line
 
 1. Add a file inside the `solvers` directory with a subclass of `core.experiment.Experiment` that implements, at least, the `solve()` method *with the same argument names*.
 1. Your `solve` method needs to return an integer with the status of the solving process. Current options are `{4: "Optimal", 2: "Feasible", 3: "Infeasible", 0: "Unknown"}`.
-1. Edit the `solvers/__init__.py` to import your solver and edit the `solvers` dictionary by giving your solver a name. 
+1. Edit the `solvers/__init__.py` to import your solver and edit the `solvers` dictionary by giving your solver a name.
 
-That's it!
+**Note**: Everything that your solver needs should be inside the `solvers` directory (you can put more than one file). Do not edit the files outside the `solvers` directories with code from your solver!
 
 ## Command line
 
