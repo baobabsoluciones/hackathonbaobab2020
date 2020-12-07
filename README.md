@@ -16,7 +16,7 @@ To understand the format of the input data file, you can check how we parse it i
 
 ## Installation
 
-python>=3.5 is needed. I'm assuming a windows installation.
+python>=3.5 is needed. I'm assuming a Windows installation.
 
 ```
 cd hackathonbaobab2020
@@ -45,7 +45,7 @@ To get all possible commands just run:
 
     python main.py solve-scenarios --help
 
-This assumes you have downloaded the zip `j30.mm.zip` of input instances and you have stored it in the `data` directory. It solves instance `j301_1.mm`.
+The following assumes you have downloaded the zip `j30.mm.zip` of input instances and you have stored it in the `data` directory. It solves instance `j301_1.mm` with the solver that is in `solvers/algorithm1` named `default` in `solvers/__init__.py`.
     
     python main.py solve-scenarios --directory=data --scenario=j30.mm.zip --solver=default --instance=j301_1.mm --no-test
 
@@ -57,7 +57,9 @@ Finally, if you pass the `zip` option you create a nice little zip at the end.
 
 The output format is always the same:
 
-    solver_name/scenario_name/instance_name/(input, output, options)
+    solver_name/scenario_name/instance_name/(input.json, output.json, options.json)
+
+The `options.json` file contains some information from the solver such as the time it took to solve, the status (Optimal, Feasible, Infeasible, etc.), the name of the solver, etc.
 
 ### To get statistics from a solution
 
@@ -73,7 +75,7 @@ And this generates a table in a csv with several columns: scenario, name (instan
 
 This can be particularly useful for the AIMMS people. And is not yet available.
 
-## Code
+## Using python objects
 
 We use the following helper objects:
 
@@ -82,9 +84,38 @@ We use the following helper objects:
 3. `Experiment` to represent input data+solution.
 4. `Algorithm(Experiment)` to represent a resolution approach.
 
-The last one (4) includes an example of a solution approach. It schedules one job at a time while respecting the sequence. Apparently, it passes the tests.
+An example of the last one (4) is found in `solvers/algorithm1.py`. It schedules one job at a time while respecting the sequence. It passes all tests except the non-renewables, sometimes.
 
 There are helper functions to read and write an instance and a solution to/from a file.
 
-An small example of how to use the existing code is available in `example/test_script.py`.
+A small example of how to use the existing code is available in `execution/test_script.py`.
+Below an example:
+
+```python
+from core import Instance
+from solvers import get_solver
+
+# get mm file
+path = "data/c15.mm/c154_3.mm"
+# initialize an instance object
+instance = Instance.from_mm(path)
+# get the solver
+solver = get_solver('default')
+# initialize the solver with the instance
+exp = solver(instance=instance)
+# solve the instance using the solver
+exp.solve({})
+# The next functions are do not depend on the solver and should not be overwritten:
+# print the possible errors on the solution obtained from the solver
+print(exp.check_solution())
+# print the objective function of the solution
+print(exp.get_objective())
+# produce a gantt chart of the job's schedule, with a color per mode.
+exp.graph()
+```
+
+
+
+
+
 
