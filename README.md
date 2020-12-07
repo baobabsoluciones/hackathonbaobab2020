@@ -25,12 +25,21 @@ venv/Scripts/activate
 pip install -r requirements.txt
 ```
 
+Remember to update the requirements! There have been some new additions to the used packages:
+
+```
+cd hackathonbaobab2020
+venv/Scripts/activate
+pip install -r requirements.txt
+```
+
 ## How to add a new solver
 
 These are the steps to add a solver and make it compatible with the command line and the python functions:
 
 1. Add a file inside the `solvers` directory with a subclass of `core.experiment.Experiment` that implements, at least, the `solve()` method *with the same argument names*.
 1. Your `solve` method needs to return an integer with the status of the solving process. Current options are `{4: "Optimal", 2: "Feasible", 3: "Infeasible", 0: "Unknown"}`.
+1. Your `solve` method also needs to store the best solution found in `self.solution`. It needs to be an instance of the `Solution` object.
 1. Edit the `solvers/__init__.py` to import your solver and edit the `solvers` dictionary by giving your solver a name.
 
 **Note**: Everything that your solver needs should be inside the `solvers` directory (you can put more than one file). Do not edit the files outside the `solvers` directories with code from your solver!
@@ -69,11 +78,32 @@ Then you do something like:
 
     python main.py export-table --path=data/default.zip --path_out=data_default.csv
 
-And this generates a table in a csv with several columns: scenario, name (instance), objective (function value), solver, (solving) time, (number of) errors (in the solution)
+This generates a table in a csv with several columns: scenario, name (instance), objective (function value), solver, (solving) time, (number of) errors (in the solution).
+
+To easily read the contents you can do:
+
+```python
+
+import pandas as pd
+df = pd.read_csv('data_default.csv')
+print(df.head().to_markdown())
+
+```
+
+Wich should print something like this:
+
+|    | scenario   | name      |   objective | solver   |        time |   errors |
+|---:|:-----------|:----------|------------:|:---------|------------:|---------:|
+|  0 | n3.mm      | n311_1.mm |          44 | default  | 0.000282581 |        1 |
+|  1 | n0.mm      | n013_7.mm |          35 | default  | 0.000227326 |        0 |
+|  2 | r4.mm      | r452_6.mm |          46 | default  | 0.00025893  |        1 |
+|  3 | n3.mm      | n343_4.mm |          37 | default  | 0.000268723 |        1 |
+|  4 | n1.mm      | n121_4.mm |          55 | default  | 0.000254337 |        0 |
+
 
 ### To convert from one type of instance to another
 
-This can be particularly useful for the AIMMS people. And is not yet available.
+This can be particularly useful for the AIMMS people. This is not yet available (sorry).
 
 ## Using python objects
 
@@ -99,7 +129,7 @@ from solvers import get_solver
 path = "data/c15.mm/c154_3.mm"
 # initialize an instance object
 instance = Instance.from_mm(path)
-# get the solver
+# get the default solver (in solvers/algorithm1.py)
 solver = get_solver('default')
 # initialize the solver with the instance
 exp = solver(instance=instance)

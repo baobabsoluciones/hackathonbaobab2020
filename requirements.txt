@@ -4,3 +4,4 @@ ortools
 plotly
 pandas
 orloge
+tabulate
