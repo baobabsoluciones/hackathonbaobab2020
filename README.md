@@ -43,7 +43,10 @@ These are the steps to add a solver and make it compatible with the command line
 1. Edit the `solvers/__init__.py` to import your solver and edit the `solvers` dictionary by giving your solver a name.
 1. If the `requirements.txt` file is missing some package you need for your solver, add it at the bottom of the list.
 
-**Note**: Everything that your solver needs should be inside the `solvers` directory (you can put more than one file). Do not edit the files outside the `solvers` directories with code from your solver!
+**Additional considerations**:
+
+1. One way to see if the solver is correctly integrated is to test solving with it via the command line (see below).
+2. Everything that your solver needs should be inside the `solvers` directory (you can put more than one file). Do not edit the files outside the `solvers` directories with code from your solver!
 
 ## Command line
 
@@ -55,7 +58,7 @@ To get all possible commands just run:
 
     python main.py solve-scenarios --help
 
-The following assumes you have downloaded the zip `j30.mm.zip` of input instances and you have stored it in the `data` directory. It solves instance `j301_1.mm` with the solver that is in `solvers/algorithm1` named `default` in `solvers/__init__.py`.
+The following assumes you have downloaded the zip `j30.mm.zip` of input instances, and you have stored it in the `data` directory. It solves instance `j301_1.mm` with the solver that is in `solvers/algorithm1` named `default` in `solvers/__init__.py`.
     
     python main.py solve-scenarios --directory=data --scenario=j30.mm.zip --solver=default --instance=j301_1.mm --no-test
 
@@ -101,10 +104,6 @@ Wich should print something like this:
 |  3 | n3.mm      | n343_4.mm |          37 | default  | 0.000268723 |        1 |
 |  4 | n1.mm      | n121_4.mm |          55 | default  | 0.000254337 |        0 |
 
-
-### To convert from one type of instance to another
-
-This can be particularly useful for the AIMMS people. This is not yet available (sorry).
 
 ## Using python objects
 
