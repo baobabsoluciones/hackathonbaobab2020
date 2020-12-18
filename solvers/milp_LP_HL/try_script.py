@@ -1,5 +1,5 @@
 from core import Instance, Experiment
-from solvers.algorithm import Milp1
+from solvers.Milp1 import Milp1
 import os
 
 
