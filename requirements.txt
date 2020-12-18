@@ -1,2 +1,7 @@
 pytups
 click
+ortools
+plotly
+pandas
+orloge
+tabulate

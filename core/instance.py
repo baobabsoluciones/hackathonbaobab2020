@@ -6,12 +6,13 @@ import json
 class Instance(object):
 
     def __init__(self, data):
-        self.data = data
+        self.data = pt.SuperDict.from_dict(data)
 
     @classmethod
-    def from_mm(cls, path):
-        with open(path, 'r') as f:
-            content = f.readlines()
+    def from_mm(cls, path, content=None):
+        if content is None:
+            with open(path, 'r') as f:
+                content = f.readlines()
 
         content = pt.TupList(content)
         index_prec = \
@@ -77,9 +78,7 @@ class Instance(object):
         return data
 
     @classmethod
-    def from_json(cls, path):
-        with open(path, 'r') as f:
-            data_json = json.load(f)
+    def from_dict(cls, data_json):
         jobs = pt.SuperDict({v['id']: v for v in data_json['jobs']})
         res = pt.SuperDict({v['id']: v for v in data_json['resources']})
         needs = pt.SuperDict({(v['job'], v['mode'], v['resource']): v['need'] for v in data_json['needs']})
@@ -87,6 +86,12 @@ class Instance(object):
         data = pt.SuperDict(jobs=jobs, resources=res, needs=needs.to_dictdict(), durations=durations.to_dictdict())
         print(data)
         return cls(data)
+
+    @classmethod
+    def from_json(cls, path):
+        with open(path, 'r') as f:
+            data_json = json.load(f)
+        return cls.from_dict(data_json)
 
     def to_json(self, path):
         
@@ -96,6 +101,3 @@ class Instance(object):
 
     def get_renewable_resources(self):
         return self.data['resources'].kfilter(lambda k: k[0]=='R').keys()
-
-    def graph(self):
-        pass
