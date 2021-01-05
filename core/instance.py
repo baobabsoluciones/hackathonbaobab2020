@@ -84,7 +84,6 @@ class Instance(object):
         needs = pt.SuperDict({(v['job'], v['mode'], v['resource']): v['need'] for v in data_json['needs']})
         durations = pt.SuperDict({(v['job'], v['mode']): v['duration'] for v in data_json['durations']})
         data = pt.SuperDict(jobs=jobs, resources=res, needs=needs.to_dictdict(), durations=durations.to_dictdict())
-        print(data)
         return cls(data)
 
     @classmethod

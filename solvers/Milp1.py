@@ -24,7 +24,6 @@ class Milp1(Experiment):
         """
     
         data = self.instance.to_dict()
-        print(data)
         self.input_data = {}
     
         jobs = list(set([j["id"] for j in data["jobs"]]))
@@ -54,16 +53,16 @@ class Milp1(Experiment):
     
         return {None: self.input_data}
     
-    def solve(self, options):
+    def solve(self, options, print_file=False):
         """
         Solve the problem.
         """
         model = get_model()
         data = self.get_input_data()
-        print(data)
+        
         model_instance = model.create_instance(data, report_timing=True)
         opt = SolverFactory('cbc')
-        opt.options.update(SOLVER_PARAMETERS)
+        opt.options.update(options["SOLVER_PARAMETERS"])
         result = opt.solve(model_instance, tee=True)
         
         self.status = get_status(result)
@@ -71,13 +70,12 @@ class Milp1(Experiment):
         print(self.status)
 
         if is_feasible(self.status):
-            self.print_instance()
+            if print_file:
+                self.print_instance()
             data = self.format_solution()
             self.solution = Solution(data)
         else:
             self.solution = Solution({})
-
-        print(self.print_instance())
         
         return get_status_value(self.status)
     
