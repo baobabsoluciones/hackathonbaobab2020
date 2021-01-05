@@ -1,5 +1,5 @@
 
-SOLVER_STATUS = {4: "Optimal", 2: "Feasible", 3: "Infeasible", 0: "Unknown"}
+SOLVER_STATUS = {4: "optimal", 2: "feasible", 3: "infeasible", 0: "unknown"}
 
 
 def reverse_dict(d):

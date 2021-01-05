@@ -27,7 +27,6 @@ def get_model():
     model.sNResources = Set()
     model.sModes = Set()
     model.sPeriods = Set()
-    #model.sPairsPrecedence = Set()
     model.sJobsPrecedence = Set(dimen=2)
     model.sJobsModes = Set(dimen=2)
     
@@ -74,7 +73,7 @@ def get_model():
     
     # c5:
     def c5_durations(model, iJob):
-        return model.vEnd[iJob] == model.vStart[iJob] +\
+        return model.vEnd[iJob] + 1 >= model.vStart[iJob] +\
         sum(model.pDuration[iJob, iMode] * model.v01Mode[iJob, iMode] for iMode in model.sModes
             if (iJob, iMode) in model.sJobsModes)
     
@@ -87,7 +86,7 @@ def get_model():
         # return model.vResources[iResource, iJob, iPeriod] >= model.v01Work[iJob, iPeriod] * model.pResourcesUsed[
         #     iJob, iResource, iMode] - M * (1 - model.v01Mode[iJob, iMode])
         return model.vResources[iResource, iJob, iPeriod] >=\
-               (model.v01Work[iJob, iPeriod] + model.v01Mode[iJob, iMode] - 1 ) *\
+               (model.v01Work[iJob, iPeriod] + model.v01Mode[iJob, iMode] - 1) *\
                model.pResourcesUsed[iJob, iResource, iMode]
     
     # c8: maximum amount renewable resources
@@ -114,8 +113,9 @@ def get_model():
     
     # Objective function
     def obj_expression(model):
-        return model.pWeightMakespan * model.vMakespan #+ M * sum(model.vSlack[i] for i in model.sJobs)
-        #+ sum(model.v01Work[iJob, iPeriod] for iJob in model.sJobs for iPeriod in model.sPeriods)
+        return model.pWeightMakespan * model.vMakespan +\
+        model.pWeightResources * sum(model.vResources[iResource, iJob, iPeriod]
+                            for iJob in model.sJobs for iPeriod in model.sPeriods for iResource in model.sNResources)
     
     
     # Activate constraints

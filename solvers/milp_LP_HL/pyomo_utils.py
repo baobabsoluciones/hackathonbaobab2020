@@ -194,7 +194,10 @@ def combine(*indices_lists):
     :param indices_lists: each argument is a list of indices (it must be a list)
     :return: The combined list of indices
     """
-    return [i for i in product(*indices_lists)]
+    if len([*indices_lists]) > 1:
+        return [i for i in product(*indices_lists)]
+    else:
+        return set(*indices_lists)
 
 
 def existing_indices(variable, *indices_lists):
