@@ -1,5 +1,8 @@
+import sys, os
+prev_dir = os.path.join(sys.path[0], '..')
+print(prev_dir)
+sys.path.insert(1, prev_dir)
 import unittest
-import os
 import execution.run_batch as run
 import solvers as pkg_solvers
 import core.experiment as exp
