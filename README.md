@@ -1,4 +1,4 @@
-# hackathonbaobab2020
+# hackathon baobab 2020
 
 The problem consists of scheduling all jobs by deciding when and in which mode the job is executed.
 There are two types of resources: (R) renewables have an availability that is recovered each period of time, (N) non-renewables have an availability for the whole planning horizon.
@@ -94,7 +94,7 @@ print(df.head().to_markdown())
 
 ```
 
-Wich should print something like this:
+Which should print something like this:
 
 |    | scenario   | name      |   objective | solver   |        time |   errors |
 |---:|:-----------|:----------|------------:|:---------|------------:|---------:|
@@ -135,7 +135,7 @@ solver = get_solver('default')
 exp = solver(instance=instance)
 # solve the instance using the solver
 exp.solve({})
-# The next functions are do not depend on the solver and should not be overwritten:
+# The next functions do not depend on the solver and should not be overwritten:
 # print the possible errors on the solution obtained from the solver
 print(exp.check_solution())
 # print the objective function of the solution

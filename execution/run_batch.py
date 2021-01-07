@@ -7,11 +7,12 @@ from timeit import default_timer as timer
 import core.tools as tools
 
 
-def solve_zip(zip_name, path_out, path_in='data/', solver_name='default', test=False, instances=None):
+def solve_zip(zip_name, path_out, path_in='data/', solver_name='default', test=False, instances=None, options=None):
     if not os.path.exists(path_out):
         os.mkdir(path_out)
     batch_out_path = os.path.join(path_out, os.path.splitext(zip_name)[0])
-
+    if options is None:
+        options = {}
     # we recreate the whole batch output file
     # if os.path.exists(batch_out_path):
     #     shutil.rmtree(batch_out_path)
@@ -38,7 +39,7 @@ def solve_zip(zip_name, path_out, path_in='data/', solver_name='default', test=F
         algo = solver(inst)
         start = timer()
         try:
-            status = algo.solve({})
+            status = algo.solve(options)
         except Exception as e:
             status = 0
             with open(os.path.join(experiment_dir, 'error.txt'), 'w') as f:
