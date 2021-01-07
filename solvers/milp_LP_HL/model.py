@@ -129,7 +129,7 @@ def get_model():
     model.c7_resource_allocation = Constraint(model.sJobsModes, model.sPeriods, model.sResources,
                                               rule=c7_resource_allocation)
     model.c8_max_r_resources = Constraint(model.sRResources, model.sPeriods, rule=c8_max_r_resources)
-    model.c9_max_n_resources = Constraint(model.sNResources, rule=c9_max_n_resources)
+    #model.c9_max_n_resources = Constraint(model.sNResources, rule=c9_max_n_resources)
     model.c10_precedence = Constraint(model.sJobsPrecedence, rule=c10_precedence)
     model.c11_continue_work = Constraint(model.sJobs, model.sPeriods, rule=c11_continue_work)
     model.c12_amount_modes = Constraint(model.sJobs, rule=c12_amount_modes)

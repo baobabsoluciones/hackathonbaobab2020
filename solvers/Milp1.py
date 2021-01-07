@@ -27,7 +27,7 @@ class Milp1(Experiment):
         self.input_data = {}
     
         jobs = list(set([j["id"] for j in data["jobs"]]))
-        periods = [p for p in range(max_period)]
+        
         resources = [r["id"] for r in data["resources"]]
         modes = list(set([d["mode"] for d in data["durations"]]))
         resources_needs = {(n["job"], n["resource"], n["mode"]): n["need"] for n in data["needs"]}
@@ -36,7 +36,11 @@ class Milp1(Experiment):
     
         jobs_durations = {(d["job"], d["mode"]): d["duration"] for d in data["durations"]}
         total_resources = {r["id"]: r["available"] for r in data["resources"]}
-    
+        
+        max_duration = {j: max(jobs_durations[j, m] for m in modes if (j, m) in jobs_durations.keys()) for j in jobs}
+        periods = [p for p in range(sum(v for v in max_duration.values()))]
+
+        self.input_data['max_duration'] = max_duration
         self.input_data["sJobs"] = {None: jobs}
         self.input_data["sPeriods"] = {None: periods}
         self.input_data["sRResources"] = {None: [r for r in resources if "R" in r]}
@@ -49,7 +53,7 @@ class Milp1(Experiment):
         self.input_data["pDuration"] = jobs_durations
         self.input_data["pMaxResources"] = total_resources
         self.input_data["pWeightMakespan"] = {None: 1}
-        self.input_data["pWeightResources"] = {None: 0}
+        self.input_data["pWeightResources"] = {None: 10}
     
         return {None: self.input_data}
     

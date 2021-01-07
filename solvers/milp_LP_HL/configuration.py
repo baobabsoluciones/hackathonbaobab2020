@@ -13,4 +13,4 @@ SOLVER_PARAMETERS = {
     "primalT": 10 ** -7,
 }
 
-MAX_PERIOD = 100
+MAX_PERIOD = 50
