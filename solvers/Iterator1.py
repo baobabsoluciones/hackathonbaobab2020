@@ -103,7 +103,19 @@ class Iterator1(Experiment):
             "vStart": ["sJobs"],
             "vEnd": ["sJobs"]
         }
-    
+
+        modes_n_resources = {(j,m): sum(self.input_data["pResourcesUsed"][(j, r, m)]
+            for r in self.input_data["sNResources"][None] if (j,r,m) in self.input_data["pResourcesUsed"])
+            for (j, m) in self.input_data["sJobsModes"][None]}
+        
+        jobs_modes = {j: [m for m in self.input_data["sModes"][None] if (j, m) in self.input_data["sJobsModes"][None]]
+                      for j in self.input_data["sJobs"][None]}
+        
+        modes_order = {j: sorted(jobs_modes[j], key = lambda m: modes_n_resources[j, m])
+                       for j in self.input_data["sJobs"][None]}
+        
+        print(modes_order)
+        
         self.iterator.set_variable_map(var_map)
     
         self.iterator.set_var_initial_values()
@@ -158,25 +170,26 @@ class Iterator1(Experiment):
         
         with open("instance_pprint.txt", "w") as f:
             self.model_solution.pprint(ostream=f)
-        
+
     def format_solution(self):
-        
+    
         instance = self.model_solution
         dict_start = var_to_dict(instance.vStart)
         dict_mode = var_to_dict(instance.v01Mode)
         set_jobs = [i for i in instance.sJobs]
-        
+    
         mode_no_denso = dict()
         for a, b in dict_mode.keys():
             if dict_mode[a, b] == 1:
                 mode_no_denso.update({a: b})
-        
-        if len(mode_no_denso)==0:
+    
+        if len(mode_no_denso) == 0:
             return {}
-        
-        final = dict()
+
+        # final = dict()
+        final = pt.SuperDict()
         for j in set_jobs:
             final[j] = dict()
-            final[j].update({'period': dict_start[j], 'mode': mode_no_denso[j]})
+            final[j].update({'period': int(dict_start[j]), 'mode': int(mode_no_denso[j])})
         return final
         

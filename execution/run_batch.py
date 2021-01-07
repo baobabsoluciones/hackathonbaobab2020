@@ -41,6 +41,7 @@ def solve_zip(zip_name, path_out, path_in='data/', solver_name='default', test=F
         try:
             status = algo.solve(options)
         except Exception as e:
+            print(e)
             status = 0
             with open(os.path.join(experiment_dir, 'error.txt'), 'w') as f:
                 f.write(str(e))

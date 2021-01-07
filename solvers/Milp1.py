@@ -5,7 +5,7 @@ from core import Experiment, Solution
 from solvers.milp_LP_HL.pyomo_utils import is_feasible, get_status, var_to_dict
 from solvers.milp_LP_HL.configuration import SOLVER_PARAMETERS, MAX_PERIOD
 from solvers.milp_LP_HL.project_utils import reverse_dict, get_status_value
-
+import pytups as pt
 
 class Milp1(Experiment):
     """
@@ -64,6 +64,12 @@ class Milp1(Experiment):
         model = get_model()
         data = self.get_input_data()
         
+        if "timeLimit" in options:
+            if "SOLVER_PARAMETERS" in options:
+                options["SOLVER_PARAMETERS"]["sec"] = options["timeLimit"]
+            else:
+                options["SOLVER_PARAMETERS"] = {"sec":options["timeLimit"]}
+
         model_instance = model.create_instance(data, report_timing=True)
         opt = SolverFactory('cbc')
         opt.options.update(options["SOLVER_PARAMETERS"])
@@ -103,9 +109,10 @@ class Milp1(Experiment):
         if len(mode_no_denso)==0:
             return {}
         
-        final = dict()
+        #final = dict()
+        final = pt.SuperDict()
         for j in set_jobs:
             final[j] = dict()
-            final[j].update({'period': dict_start[j], 'mode': mode_no_denso[j]})
+            final[j].update({'period': int(dict_start[j]), 'mode': int(mode_no_denso[j])})
         return final
         

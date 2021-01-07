@@ -95,8 +95,8 @@ def get_model():
     
     # c9: maximum amount non-renewable resources
     def c9_max_n_resources(model, iResource):
-        return sum(model.vResources[iResource, iJob, iPeriod] for iJob in model.sJobs for iPeriod in model.sPeriods) <= \
-               model.pMaxResources[iResource]
+        return sum(model.v01Mode[iJob, iMode] * model.pResourcesUsed[iJob, iResource, iMode]
+                   for (iJob, iMode) in model.sJobsModes) <= model.pMaxResources[iResource]
     
     # c10: precedence
     def c10_precedence(model, iJob1, iJob2):
@@ -113,9 +113,10 @@ def get_model():
     
     # Objective function
     def obj_expression(model):
-        return model.pWeightMakespan * model.vMakespan +\
-        model.pWeightResources * sum(model.vResources[iResource, iJob, iPeriod]
-                            for iJob in model.sJobs for iPeriod in model.sPeriods for iResource in model.sNResources)
+        return model.pWeightMakespan * model.vMakespan \
+        #        +\
+        # model.pWeightResources * sum(model.vResources[iResource, iJob, iPeriod]
+        #                     for iJob in model.sJobs for iPeriod in model.sPeriods for iResource in model.sNResources)
     
     
     # Activate constraints
@@ -126,10 +127,10 @@ def get_model():
     model.c4_amount_ends = Constraint(model.sJobs, rule=c4_amount_ends)
     model.c5_durations = Constraint(model.sJobs, rule=c5_durations)
     model.c6_makespan_value = Constraint(model.sJobs, rule=c6_makespan_value)
-    model.c7_resource_allocation = Constraint(model.sJobsModes, model.sPeriods, model.sResources,
+    model.c7_resource_allocation = Constraint(model.sJobsModes, model.sPeriods, model.sRResources,
                                               rule=c7_resource_allocation)
     model.c8_max_r_resources = Constraint(model.sRResources, model.sPeriods, rule=c8_max_r_resources)
-    #model.c9_max_n_resources = Constraint(model.sNResources, rule=c9_max_n_resources)
+    model.c9_max_n_resources = Constraint(model.sNResources, rule=c9_max_n_resources)
     model.c10_precedence = Constraint(model.sJobsPrecedence, rule=c10_precedence)
     model.c11_continue_work = Constraint(model.sJobs, model.sPeriods, rule=c11_continue_work)
     model.c12_amount_modes = Constraint(model.sJobs, rule=c12_amount_modes)
