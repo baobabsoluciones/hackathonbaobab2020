@@ -142,7 +142,10 @@ class BaseIterator:
         
         :return: nothing (modify the instance)
         """
-        dont_activate = [self.get_constraint(e) for e in exclude]
+        if exclude is not None:
+            dont_activate = [self.get_constraint(e) for e in exclude]
+        else:
+            dont_activate = []
         
         constraint_list = self.get_instance_constraint_list()
         for const in constraint_list:
@@ -235,7 +238,7 @@ class BaseIterator:
         self.deactivate_unused_constraints(exclude=excluded_constraints)
 
         status, obj = self.solve()
-        self.show_solution(free_keys)
+        #self.show_solution(free_keys)
         
         return status, obj
     

@@ -9,6 +9,7 @@ from solvers.milp_LP_HL.project_utils import reverse_dict, get_status_value
 from solvers.milp_LP_HL.generic_iterator import BaseIterator
 from solvers.milp_LP_HL.function_utils import Chrono
 from itertools import product
+import pytups as pt
 import pyomo.environ as pyo
 
 class Iterator1(Experiment):
@@ -21,12 +22,12 @@ class Iterator1(Experiment):
             solution = {}
         super().__init__(instance, solution)
         return
-
+    
+    
     def get_input_data(self, max_period=MAX_PERIOD):
         """
         Prepair the data for the milp model.
         """
-    
         data = self.instance.to_dict()
         self.input_data = {}
     
@@ -41,8 +42,11 @@ class Iterator1(Experiment):
         jobs_durations = {(d["job"], d["mode"]): d["duration"] for d in data["durations"]}
         total_resources = {r["id"]: r["available"] for r in data["resources"]}
         
-        max_duration = {j:max(jobs_durations[j, m] for m in modes if (j, m) in jobs_durations.keys()) for j in jobs}
-
+        jobs_modes = [(j, m) for (j, m) in jobs_durations.keys()
+            if all([resources_needs[j, r, m] <= total_resources[r] for r in resources])]
+        print(jobs_modes)
+        max_duration = {j:max(jobs_durations[j, m] for m in modes if (j, m) in jobs_modes) for j in jobs}
+        
         self.input_data['max_duration'] = max_duration
         self.input_data["sJobs"] = {None: jobs}
         self.input_data["sPeriods"] = {None: periods}
@@ -51,7 +55,7 @@ class Iterator1(Experiment):
         self.input_data["sResources"] = {None: resources}
         self.input_data["sModes"] = {None: modes}
         self.input_data["sJobsPrecedence"] = {None: jobs_precedence}
-        self.input_data["sJobsModes"] = {None: [i for i in jobs_durations.keys()]}
+        self.input_data["sJobsModes"] = {None: jobs_modes}
         self.input_data["pResourcesUsed"] = resources_needs
         self.input_data["pDuration"] = jobs_durations
         self.input_data["pMaxResources"] = total_resources
@@ -71,8 +75,7 @@ class Iterator1(Experiment):
         opt = SolverFactory('cbc')
         opt.options.update(options["SOLVER_PARAMETERS"])
         self.iterator = BaseIterator(model_instance, opt, verbose=True)
-        self.get_initial_solution(step=5)
-        
+        self.get_initial_solution(step=5, modes_steps=3)
         
         result = opt.solve(model_instance, tee=True)
         
@@ -90,7 +93,31 @@ class Iterator1(Experiment):
         
         return get_status_value(self.status)
     
-    def get_initial_solution(self, step):
+    
+    def get_modes_order(self, current_resources=None):
+        
+        pResourcesUsed = self.input_data["pResourcesUsed"]
+        pMaxResources = self.input_data["pMaxResources"]
+        sNResources = self.input_data["sNResources"][None]
+        sJobsModes = self.input_data["sJobsModes"][None]
+        sModes = self.input_data["sModes"][None]
+        sJobs = self.input_data["sJobs"][None]
+        
+        if current_resources is not None:
+            resources_left = {r:(pMaxResources[r] - current_resources[r]) for r in sNResources}
+        else:
+            resources_left = pMaxResources
+        print(resources_left)
+        modes_n_resources = {(j, m): sum((pResourcesUsed[(j, r, m)] / resources_left[r])
+                                        for r in sNResources if (j, r, m) in pResourcesUsed) for (j, m) in sJobsModes}
+    
+        jobs_modes = {j: [m for m in sModes if (j, m) in sJobsModes] for j in sJobs}
+    
+        modes_order = {j: sorted(jobs_modes[j], key=lambda m: modes_n_resources[j, m]) for j in sJobs}
+        
+        return modes_order
+    
+    def get_initial_solution(self, step, modes_steps):
     
         chrono = Chrono("construction of a first solution", silent=False)
         
@@ -98,53 +125,50 @@ class Iterator1(Experiment):
             "v01Start": ["sJobs", "sPeriods"],
             "v01End": ["sJobs", "sPeriods"],
             "v01Work": ["sJobs", "sPeriods"],
-            "v01Mode": ["sJobs", "sModes"],
+            "v01Mode": ["sJobsModes"],
             "vResources": ["sResources", "sJobs", "sPeriods"],
             "vStart": ["sJobs"],
             "vEnd": ["sJobs"]
         }
 
-        modes_n_resources = {(j,m): sum(self.input_data["pResourcesUsed"][(j, r, m)]
-            for r in self.input_data["sNResources"][None] if (j,r,m) in self.input_data["pResourcesUsed"])
-            for (j, m) in self.input_data["sJobsModes"][None]}
+        sJobs = self.input_data["sJobs"][None]
         
-        jobs_modes = {j: [m for m in self.input_data["sModes"][None] if (j, m) in self.input_data["sJobsModes"][None]]
-                      for j in self.input_data["sJobs"][None]}
-        
-        modes_order = {j: sorted(jobs_modes[j], key = lambda m: modes_n_resources[j, m])
-                       for j in self.input_data["sJobs"][None]}
-        
-        print(modes_order)
+        modes_order = self.get_modes_order()
+        first_modes = [(j, modes_order[j][0]) for j in sJobs]
         
         self.iterator.set_variable_map(var_map)
     
         self.iterator.set_var_initial_values()
         
         k = 0
-        free_indices = {"sJobs":[], "sPeriods":[], "sModes":[], "sResources": self.input_data["sResources"][None]}
-        fixed_indices = {"sJobs":[], "sPeriods": [], "sModes": self.input_data["sModes"][None], "sResources": []}
-        self.iteration = {}
         i = 0
-        sJobs = self.input_data["sJobs"][None]
+        free_indices = {"sJobs":[], "sPeriods":[], "sJobsModes":[], "sResources": self.input_data["sResources"][None]}
+        fixed_indices = {"sJobs":[], "sPeriods": [], "sJobsModes": [], "sResources": []}
+        self.iteration = {}
         max_jobs = len(sJobs)
         makespan = 0
         
         # TODO: find a more elegant way to do this
         deactivate_constraint(self.iterator.get_constraint("c10_precedence"))
         
+        # Create a first solution with all jobs and the "cheapest" modes
         while k < max_jobs:
             i += 1
             print("iteration ", i)
             max_j = min(k + step, max_jobs)
-            max_period = int(2 + makespan + sum(self.input_data["max_duration"][sJobs[j]] for j in range(k, max_j)))
+            max_period = int(3 + makespan + sum(self.input_data["max_duration"][sJobs[j]] for j in range(k, max_j)))
             fixed_indices["sJobs"] += free_indices["sJobs"]
+            fixed_indices["sJobsModes"] += free_indices["sJobsModes"]
             fixed_indices["sPeriods"] = [j for j in range(max_period)]
             free_indices["sJobs"] = [sJobs[j] for j in range(k, max_j)]
+            free_indices["sJobsModes"] = [(j, m) for (j, m) in first_modes if j in free_indices["sJobs"]]
+            expected_resources = {r: sum(self.input_data["pResourcesUsed"][j, r, m] for j,m in free_indices["sJobsModes"])
+                                  for r in self.input_data["sNResources"][None]}
             print("free indices ", free_indices)
             print("fixed indices ", fixed_indices)
+            print("Expected resources used", expected_resources)
             
             free_jobs = [(i,j) for (i,j) in product(free_indices["sJobs"], free_indices["sJobs"]) if i != j]
-            print(free_jobs)
             activate_constraint(self.iterator.get_constraint("c10_precedence"), free_jobs)
             
             self.iteration[i] = self.iterator.iterate(free_indices, fixed_indices,
@@ -152,16 +176,55 @@ class Iterator1(Experiment):
             makespan = pyo.value(self.iterator.get_variable("vMakespan"))
             k = max_j
             
+            print("Objective: " + str(makespan))
+            v01Mode = var_to_dict(self.iterator.get_variable("v01Mode"))
+            resources_used = {r: sum(v01Mode[j, m] * self.input_data["pResourcesUsed"][j, r, m]
+                   for (j, m) in self.input_data["sJobsModes"][None]) for r in self.input_data["sNResources"][None]}
+            modes_order = self.get_modes_order(resources_used)
+            first_modes = [(j, modes_order[j][0]) for j in sJobs]
+            print("Resources_used: ", resources_used)
+            
             if not is_feasible(self.iteration[i][0]):
                 print("Error encountered")
                 break
+                
+        print("Current objective value: " + str(self.iteration[i][0]))
+        
+        self.iterator.instance.sPeriods.values = [i for i in range(int(makespan + 1))]
+        self.input_data["sJobs"][None] = [i for i in range(int(makespan + 1))]
 
-        print(self.iteration[i][0])
+        if is_feasible(self.iteration[i][0]):
+            # Add the other modes little by little
+            k = 0
+            i = 0
+            
+            while k < max_jobs:
+                i += 1
+                print("iteration ", i)
+                max_j = min(k + modes_steps, max_jobs)
+                free_jobs = range(k, max_j)
+                self.solve_with_free_jobs_modes(free_jobs)
+                k = max_j
+        
         self.model_solution = self.iterator.instance
         self.print_instance()
         
         chrono.stop()
     
+    def solve_with_free_jobs_modes(self, free_jobs):
+        
+        sJobs = self.input_data["sJobs"][None]
+        sPeriods = self.input_data["sPeriods"][None]
+        sJobsModes = self.input_data["sJobsModes"][None]
+        
+        free_jobs_modes = [(j, m) for j,m in sJobsModes if j in free_jobs]
+        fixed_jobs_modes = [k for k in sJobsModes if k not in free_jobs_modes]
+        
+        free_indices = {"sJobs":sJobs, "sPeriods":sPeriods, "sJobsModes":free_jobs_modes,
+                        "sResources": self.input_data["sResources"][None]}
+        fixed_indices = {"sJobs":[], "sPeriods": [], "sJobsModes": fixed_jobs_modes, "sResources": []}
+        
+        self.iterator.iterate(free_indices, fixed_indices)
     
     def print_instance(self):
         print("printing instance")

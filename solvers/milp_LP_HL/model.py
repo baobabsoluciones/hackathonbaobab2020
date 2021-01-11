@@ -32,7 +32,7 @@ def get_model():
     
     # General parameters
     model.pResourcesUsed = Param(model.sJobs, model.sResources, model.sModes, mutable=True)
-    model.pDuration = Param(model.sJobsModes, mutable=True)
+    model.pDuration = Param(model.sJobs, model.sModes, mutable=True)
     model.pMaxResources = Param(model.sResources, mutable=True)
     
     # Objective function parameters
@@ -46,7 +46,7 @@ def get_model():
     model.v01Mode = Var(model.sJobsModes, domain=Binary)
     model.vStart = Var(model.sJobs, domain=NonNegativeReals)
     model.vEnd = Var(model.sJobs, domain=NonNegativeReals)
-    model.vResources = Var(model.sResources, model.sJobs, model.sPeriods, domain=NonNegativeReals)
+    model.vResources = Var(model.sRResources, model.sJobs, model.sPeriods, domain=NonNegativeReals)
     model.vMakespan = Var(domain=NonNegativeReals)
     model.vSlack = Var(model.sJobs, domain=NonNegativeReals)
     
@@ -113,7 +113,7 @@ def get_model():
     
     # Objective function
     def obj_expression(model):
-        return model.pWeightMakespan * model.vMakespan \
+        return model.pWeightMakespan * model.vMakespan
         #        +\
         # model.pWeightResources * sum(model.vResources[iResource, iJob, iPeriod]
         #                     for iJob in model.sJobs for iPeriod in model.sPeriods for iResource in model.sNResources)
