@@ -1,7 +1,7 @@
 # hackathon baobab 2020
 
 The problem consists of scheduling all jobs by deciding when and in which mode the job is executed.
-There are two types of resources: (R) renewables have an availability that is recovered each period of time, (N) non-renewables have an availability for the whole planning horizon.
+There are two types of resources: renewable resources (R) are consumed *each period* and have an availability that is recovered each period of time; non-renewable resources (N) are consumed *once per job* and have an availability for the whole planning horizon.
 The objective is to reduce the finishing time (start time + duration) of the last job.
 
 The instances for the problem are found here:

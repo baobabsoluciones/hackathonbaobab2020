@@ -1,6 +1,5 @@
 import sys, os
 prev_dir = os.path.join(sys.path[0], '..')
-print(prev_dir)
 sys.path.insert(1, prev_dir)
 import unittest
 import execution.run_batch as run
@@ -50,14 +49,14 @@ class HackathonTests(unittest.TestCase):
             solver_name=self.solver,
             test=False,
             instances=[instance],
-            options=dict(timeLimit=60)
+            options=dict(timeLimit=60, gapRel=1)
         )
 
         experiment = exp.Experiment.from_json(self.path_out + scenario + '/' + instance)
         return experiment.check_solution()
 
-    def test_j10(self):
-        return self.run_scenario_instance('j10.mm', 'j102_2.mm')
+    # def test_j10(self):
+    #     return self.run_scenario_instance('j10.mm', 'j102_2.mm')
 
     def test_j10_2(self):
         return self.run_scenario_instance('j10.mm', 'j102_4.mm')
@@ -68,14 +67,14 @@ class HackathonTests(unittest.TestCase):
     def test_j10_4(self):
         return self.run_scenario_instance('j10.mm', 'j102_6.mm')
 
-    def test_c15(self):
-        return self.run_scenario_instance('c15.mm', 'c154_3.mm')
+    # def test_c15(self):
+    #     return self.run_scenario_instance('c15.mm', 'c154_3.mm')
 
-    def test_c15_3(self):
-        return self.run_scenario_instance('c15.mm', 'c158_3.mm')
-
-    def test_c15_2(self):
-        return self.run_scenario_instance('c15.mm', 'c158_4.mm')
+    # def test_c15_3(self):
+    #     return self.run_scenario_instance('c15.mm', 'c158_3.mm')
+    #
+    # def test_c15_2(self):
+    #     return self.run_scenario_instance('c15.mm', 'c158_4.mm')
 
 
 def testAll():
