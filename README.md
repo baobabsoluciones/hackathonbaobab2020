@@ -1,7 +1,7 @@
 # hackathon baobab 2020
 
 The problem consists of scheduling all jobs by deciding when and in which mode the job is executed.
-There are two types of resources: (R) renewables have an availability that is recovered each period of time, (N) non-renewables have an availability for the whole planning horizon.
+There are two types of resources: renewable resources (R) are consumed *each period* and have an availability that is recovered each period of time; non-renewable resources (N) are consumed *once per job* and have an availability for the whole planning horizon.
 The objective is to reduce the finishing time (start time + duration) of the last job.
 
 The instances for the problem are found here:
@@ -25,14 +25,6 @@ venv/Scripts/activate
 pip install -r requirements.txt
 ```
 
-Remember to update the requirements! There have been some new additions to the used packages:
-
-```
-cd hackathonbaobab2020
-venv/Scripts/activate
-pip install -r requirements.txt
-```
-
 ## How to add a new solver
 
 These are the steps to add a solver and make it compatible with the command line and the python functions:
@@ -47,6 +39,13 @@ These are the steps to add a solver and make it compatible with the command line
 
 1. One way to see if the solver is correctly integrated is to test solving with it via the command line (see below).
 2. Everything that your solver needs should be inside the `solvers` directory (you can put more than one file). Do not edit the files outside the `solvers` directories with code from your solver!
+
+## How to run tests
+
+These tests are run also in github and test some small example problems with a `timelimit` of 60 (check the `options` dictionary).
+```
+python tests/tests.py 
+ ```
 
 ## Command line
 
