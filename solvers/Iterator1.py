@@ -4,7 +4,7 @@ from pyomo.environ import SolverFactory
 from core import Experiment, Solution
 from solvers.milp_LP_HL.pyomo_utils import is_feasible, get_status, var_to_dict,\
     deactivate_constraint, activate_constraint
-from solvers.milp_LP_HL.configuration import SOLVER_PARAMETERS, MAX_PERIOD
+from solvers.milp_LP_HL.configuration import SOLVER_PARAMETERS, MAX_PERIOD, MIN_ITERATION_TIME
 from solvers.milp_LP_HL.project_utils import reverse_dict, get_status_value
 from solvers.milp_LP_HL.generic_iterator import BaseIterator
 from solvers.milp_LP_HL.function_utils import Chrono
@@ -72,11 +72,17 @@ class Iterator1(Experiment):
         model = get_model()
         data = self.get_input_data()
         
+        if "timeLimit" in options:
+            if "SOLVER_PARAMETERS" in options:
+                options["SOLVER_PARAMETERS"]["sec"] = max(int(options["timeLimit"] / 10), MIN_ITERATION_TIME)
+            else:
+                options["SOLVER_PARAMETERS"] = {"sec":max(int(options["timeLimit"] / 10), MIN_ITERATION_TIME)}
+        
         model_instance = model.create_instance(data, report_timing=False)
         opt = SolverFactory('cbc')
         opt.options.update(options["SOLVER_PARAMETERS"])
         self.iterator = BaseIterator(model_instance, opt, verbose=False)
-        self.get_initial_solution(step=5, modes_steps=3)
+        status, obj = self.get_initial_solution(step=5, modes_steps=3)
         
         print("Solving the complete problem")
         status, obj = self.iterator.solve()
@@ -152,6 +158,7 @@ class Iterator1(Experiment):
         
         # TODO: find a more elegant way to do this
         deactivate_constraint(self.iterator.get_constraint("c10_precedence"))
+        deactivate_constraint(self.iterator.get_constraint("c9_max_n_resources"))
         
         # Create a first solution with all jobs and the "cheapest" modes
         while k < max_jobs:
@@ -167,14 +174,14 @@ class Iterator1(Experiment):
                                   for r in self.input_data["sNResources"][None]}
             # print("free indices ", free_indices)
             # print("fixed indices ", fixed_indices)
-            # print("Expected resources used", expected_resources)
+            #print("Expected resources used", expected_resources)
             
             free_jobs = [(i,j) for (i,j) in product(free_indices["sJobs"] + fixed_indices["sJobs"],
                                                     free_indices["sJobs"] + fixed_indices["sJobs"]) if i != j]
             activate_constraint(self.iterator.get_constraint("c10_precedence"), free_jobs)
             
             self.iteration[i] = self.iterator.iterate(free_indices, fixed_indices,
-                                                      excluded_constraints=["c10_precedence"])
+                                                      excluded_constraints=["c10_precedence", "c9_max_n_resources"])
             print("Iteration {} status: {} obj: {} ".format(i, self.iteration[i][0], self.iteration[i][1]))
             makespan = pyo.value(self.iterator.get_variable("vMakespan"))
             k = max_j
@@ -183,9 +190,9 @@ class Iterator1(Experiment):
             v01Mode = var_to_dict(self.iterator.get_variable("v01Mode"))
             resources_used = {r: sum(v01Mode[j, m] * self.input_data["pResourcesUsed"][j, r, m]
                    for (j, m) in self.input_data["sJobsModes"][None]) for r in self.input_data["sNResources"][None]}
+            #print("Resources_used: ", resources_used)
             modes_order = self.get_modes_order(resources_used)
             first_modes = [(j, modes_order[j][0]) for j in sJobs]
-            #print("Resources_used: ", resources_used)
             
             if not is_feasible(self.iteration[i][0]):
                 print("Error encountered")
@@ -193,6 +200,7 @@ class Iterator1(Experiment):
 
         status, obj = self.iteration[i]
         activate_constraint(self.iterator.get_constraint("c10_precedence"))
+        activate_constraint(self.iterator.get_constraint("c9_max_n_resources"))
         self.iterator.instance.sPeriods.values = [i for i in range(int(makespan + 1))]
         self.input_data["sPeriods"][None] = [i for i in range(int(makespan + 1))]
 

@@ -5,7 +5,7 @@ from .Iterator1 import Iterator1
 
 solvers = \
     dict(default=Algorithm,
-		 Milp_LP_HL = Milp1,
+		 #Milp_LP_HL = Milp1,
          ortools=CPModel1,
          Iterator_HL = Iterator1
          )
