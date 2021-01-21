@@ -179,6 +179,12 @@ class BaseIterator:
                 for k, val in var_values[v_name].items():
                     v[k] = val
     
+    def free_everything(self):
+        all_var = self.get_instance_var_list()
+        all_con = self.get_instance_constraint_list()
+        free_variable_list(all_var)
+        activate_constraint_list(all_con)
+    
     def show_solution(self, free_keys):
         """
         Show the solution for the variables and keys that were free in this iteration.

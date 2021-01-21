@@ -4,7 +4,7 @@
 # parameters of the resolution.
 SOLVER_PARAMETERS = {
     # maximum resolution time of each iteration.
-    "sec": 300,
+    "sec": 30,
     # accepted absolute gap
     "allow": 1,
     # accepted relative gap (0.01 = 1%)
@@ -13,4 +13,4 @@ SOLVER_PARAMETERS = {
     "primalT": 10 ** -7,
 }
 
-MAX_PERIOD = 50
+MAX_PERIOD = 100

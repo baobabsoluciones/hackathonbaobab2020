@@ -16,7 +16,7 @@ class Milp1(Experiment):
         if solution is None:
             solution = {}
         super().__init__(instance, solution)
-        return
+        print("\nSolving with Milp1")
 
     def get_input_data(self, max_period=MAX_PERIOD):
         """
@@ -70,10 +70,10 @@ class Milp1(Experiment):
             else:
                 options["SOLVER_PARAMETERS"] = {"sec":options["timeLimit"]}
 
-        model_instance = model.create_instance(data, report_timing=True)
+        model_instance = model.create_instance(data, report_timing=False)
         opt = SolverFactory('cbc')
         opt.options.update(options["SOLVER_PARAMETERS"])
-        result = opt.solve(model_instance, tee=True)
+        result = opt.solve(model_instance, tee=False)
         
         self.status = get_status(result)
         self.model_solution = model_instance
