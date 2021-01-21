@@ -20,7 +20,7 @@ class Iterator1(Experiment):
 
     def __init__(self, instance, solution=None):
         if solution is None:
-            solution = {}
+            solution = Solution({})
         super().__init__(instance, solution)
         self.input_data = {}
         print("\nSolving with Iterator1")
@@ -65,18 +65,25 @@ class Iterator1(Experiment):
     
         return {None: self.input_data}
     
-    def solve(self, options, print_file=False):
+    def solve(self, options=None, print_file=False):
         """
         Solve the problem.
         """
+        print(options)
         model = get_model()
+        
         data = self.get_input_data()
+        
+        if options is None:
+            options = {}
         
         if "timeLimit" in options:
             if "SOLVER_PARAMETERS" in options:
                 options["SOLVER_PARAMETERS"]["sec"] = max(int(options["timeLimit"] / 10), MIN_ITERATION_TIME)
             else:
                 options["SOLVER_PARAMETERS"] = {"sec":max(int(options["timeLimit"] / 10), MIN_ITERATION_TIME)}
+        else:
+            options["SOLVER_PARAMETERS"] = SOLVER_PARAMETERS
         
         model_instance = model.create_instance(data, report_timing=False)
         opt = SolverFactory('cbc')

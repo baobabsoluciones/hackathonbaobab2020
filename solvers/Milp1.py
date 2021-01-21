@@ -64,12 +64,17 @@ class Milp1(Experiment):
         model = get_model()
         data = self.get_input_data()
         
+        if options is None:
+            options = {}
+        
         if "timeLimit" in options:
             if "SOLVER_PARAMETERS" in options:
-                options["SOLVER_PARAMETERS"]["sec"] = options["timeLimit"]
+                options["SOLVER_PARAMETERS"]["sec"] = max(int(options["timeLimit"] / 10), MIN_ITERATION_TIME)
             else:
-                options["SOLVER_PARAMETERS"] = {"sec":options["timeLimit"]}
-
+                options["SOLVER_PARAMETERS"] = {"sec": max(int(options["timeLimit"] / 10), MIN_ITERATION_TIME)}
+        else:
+            options["SOLVER_PARAMETERS"] = SOLVER_PARAMETERS
+        
         model_instance = model.create_instance(data, report_timing=False)
         opt = SolverFactory('cbc')
         opt.options.update(options["SOLVER_PARAMETERS"])
