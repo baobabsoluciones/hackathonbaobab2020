@@ -48,7 +48,6 @@ class BaseIterator:
         """
         self.variable_map = new_map
     
-    
     def get_free_keys(self, var_name, free_indices, fixed_indices):
         """
         Get all the keys (combinations of indices) of a variable that should be free.
@@ -180,6 +179,9 @@ class BaseIterator:
                     v[k] = val
     
     def free_everything(self):
+        """
+        Free all the variables and activate all the constraints
+        """
         all_var = self.get_instance_var_list()
         all_con = self.get_instance_constraint_list()
         free_variable_list(all_var)

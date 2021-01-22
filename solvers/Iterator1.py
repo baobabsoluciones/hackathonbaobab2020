@@ -8,6 +8,7 @@ from solvers.milp_LP_HL.configuration import SOLVER_PARAMETERS, MAX_PERIOD, MIN_
 from solvers.milp_LP_HL.project_utils import reverse_dict, get_status_value
 from solvers.milp_LP_HL.generic_iterator import BaseIterator
 from solvers.milp_LP_HL.function_utils import Chrono
+from solvers.milp_LP_HL.resources_subproblem import solve_resource_subproblem
 from itertools import product
 import pytups as pt
 import pyomo.environ as pyo
@@ -45,7 +46,7 @@ class Iterator1(Experiment):
         
         jobs_modes = [(j, m) for (j, m) in jobs_durations.keys()
                 if all([resources_needs[j, r, m] <= total_resources[r] for r in resources])]
-        #print(jobs_modes)
+        
         max_duration = {j:max(jobs_durations[j, m] for m in modes if (j, m) in jobs_modes) for j in jobs}
         
         self.input_data['max_duration'] = max_duration
@@ -81,7 +82,7 @@ class Iterator1(Experiment):
             if "SOLVER_PARAMETERS" in options:
                 options["SOLVER_PARAMETERS"]["sec"] = max(int(options["timeLimit"] / 10), MIN_ITERATION_TIME)
             else:
-                options["SOLVER_PARAMETERS"] = {"sec":max(int(options["timeLimit"] / 10), MIN_ITERATION_TIME)}
+                options["SOLVER_PARAMETERS"] = {"sec": max(int(options["timeLimit"] / 10), MIN_ITERATION_TIME)}
         else:
             options["SOLVER_PARAMETERS"] = SOLVER_PARAMETERS
         
@@ -121,7 +122,7 @@ class Iterator1(Experiment):
             resources_left = {r:(pMaxResources[r] - current_resources[r]) for r in sNResources}
         else:
             resources_left = pMaxResources
-        #print(resources_left)
+        print(resources_left)
         modes_n_resources = {(j, m): sum((pResourcesUsed[(j, r, m)] / resources_left[r])
                                          if resources_left[r] > 0 else 1000
                                         for r in sNResources if (j, r, m) in pResourcesUsed) for (j, m) in sJobsModes}
@@ -148,8 +149,10 @@ class Iterator1(Experiment):
 
         sJobs = self.input_data["sJobs"][None]
         
-        modes_order = self.get_modes_order()
-        first_modes = [(j, modes_order[j][0]) for j in sJobs]
+        #modes_order = self.get_modes_order()
+        #first_modes = [(j, modes_order[j][0]) for j in sJobs]
+
+        first_modes = solve_resource_subproblem(self.get_input_data())
         
         self.iterator.set_variable_map(var_map)
     
@@ -198,8 +201,8 @@ class Iterator1(Experiment):
             resources_used = {r: sum(v01Mode[j, m] * self.input_data["pResourcesUsed"][j, r, m]
                    for (j, m) in self.input_data["sJobsModes"][None]) for r in self.input_data["sNResources"][None]}
             #print("Resources_used: ", resources_used)
-            modes_order = self.get_modes_order(resources_used)
-            first_modes = [(j, modes_order[j][0]) for j in sJobs]
+            # modes_order = self.get_modes_order(resources_used)
+            # first_modes = [(j, modes_order[j][0]) for j in sJobs]
             
             if not is_feasible(self.iteration[i][0]):
                 print("Error encountered")
@@ -211,6 +214,13 @@ class Iterator1(Experiment):
         self.iterator.instance.sPeriods.values = [i for i in range(int(makespan + 1))]
         self.input_data["sPeriods"][None] = [i for i in range(int(makespan + 1))]
 
+        free_indices = {"sJobs": sJobs, "sPeriods": [], "sJobsModes": self.input_data["sJobsModes"][None],
+                        "sResources": self.input_data["sResources"][None]}
+        fixed_indices = {"sJobs": [], "sPeriods": self.input_data["sPeriods"][None],
+                         "sJobsModes": [], "sResources": []}
+        status, obj = self.iterator.iterate(free_indices, fixed_indices)
+        print(status)
+        
         if is_feasible(status):
             # Add the other modes little by little
             print("Adding all the modes")
@@ -224,6 +234,9 @@ class Iterator1(Experiment):
                 status, obj = self.solve_with_free_jobs_modes(free_jobs)
                 k = max_j
                 print("iteration {} status: {} obj: {} ".format(i, status, obj))
+                if not is_feasible(status):
+                    print("Error encountered")
+                    break
 
             makespan = pyo.value(self.iterator.get_variable("vMakespan"))
             self.iterator.instance.sPeriods.values = [i for i in range(int(makespan + 1))]

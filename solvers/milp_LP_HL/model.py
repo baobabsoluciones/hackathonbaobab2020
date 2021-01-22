@@ -1,7 +1,7 @@
 """
-​
-Optimization model to assign employees to bus stops
-​
+
+Optimization model
+
 """
 
 import pyomo
@@ -10,12 +10,10 @@ from pyomo.environ import *
 
 def get_model():
     """
-    This function creates the pyomo bus stops location abstract model.
-​
+    This function creates the pyomo  model.
+    
     :return: a pyomo abstract model
     """
-    
-    M = 100
     
     # Create model
     model = AbstractModel()

@@ -14,7 +14,7 @@ class Milp1(Experiment):
 
     def __init__(self, instance, solution=None):
         if solution is None:
-            solution = {}
+            solution = Solution({})
         super().__init__(instance, solution)
         print("\nSolving with Milp1")
 
@@ -56,7 +56,7 @@ class Milp1(Experiment):
         self.input_data["pWeightResources"] = {None: 10}
     
         return {None: self.input_data}
-    
+        
     def solve(self, options, print_file=False):
         """
         Solve the problem.
@@ -66,12 +66,11 @@ class Milp1(Experiment):
         
         if options is None:
             options = {}
-        
         if "timeLimit" in options:
             if "SOLVER_PARAMETERS" in options:
-                options["SOLVER_PARAMETERS"]["sec"] = max(int(options["timeLimit"] / 10), MIN_ITERATION_TIME)
+                options["SOLVER_PARAMETERS"]["sec"] = options["timeLimit"]
             else:
-                options["SOLVER_PARAMETERS"] = {"sec": max(int(options["timeLimit"] / 10), MIN_ITERATION_TIME)}
+                options["SOLVER_PARAMETERS"] = {"sec":options["timeLimit"]}
         else:
             options["SOLVER_PARAMETERS"] = SOLVER_PARAMETERS
         
@@ -82,7 +81,8 @@ class Milp1(Experiment):
         
         self.status = get_status(result)
         self.model_solution = model_instance
-        print(self.status)
+        obj = model_instance.f_obj()
+        print("Status: {} Objective value: {}".format(self.status, obj))
 
         if is_feasible(self.status):
             if print_file:
