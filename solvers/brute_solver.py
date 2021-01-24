@@ -10,7 +10,7 @@ SOLVER_STATUS = {4: "optimal", 2: "maxTimeLimit", 3: "infeasible", 0: "unknown"}
 
 SOLVER_PARAMETERS = {
     # maximum resolution time of each iteration.
-    "sec": 120,
+    "sec": 600,
     # accepted absolute gap
     "allow": 1,
     # accepted relative gap (0.01 = 1%)
@@ -64,20 +64,6 @@ def get_status_value(status):
         return val["Unknown"]
 
 
-def write_cbc_warmstart_file(filename, instance, opt):
-    """
-    This function writes a file to be passed to cbc solver as a warmstart file.
-    This function is necessary because of a bug of cbc that does not allow reading warmstart files on windows
-    with an absolute path.
-    :param filename: path to the file
-    :param instance: model instance (created with create_instance)
-    :param opt: solver instance (created with solver factory)
-    :return:
-    """
-    opt._presolve(instance)
-    opt._write_soln_file(instance, filename)
-
-
 def get_assign_tasks_model():
     # Model definition
     model = AbstractModel()
@@ -114,8 +100,7 @@ def get_assign_tasks_model():
     def c2_renewable_resources(model, iSlot, iResource, iMode):
         if model.pResourceType[iResource] == 1:
             return sum(model.v01JobDone[iJob, iSlot, iMode] * model.pNeeds[iJob, iMode, iResource]
-                       for iJob in model.sJobs if (iJob, iMode, iResource) in model.pNeeds) <= model.pAvailability[
-                       iResource]
+                       for iJob in model.sJobs if (iJob, iMode, iResource) in model.pNeeds) <= model.pAvailability[iResource]
         return Constraint.Skip
 
     # c3: the total non renewable resources used should be inferior to the resource availability
@@ -123,8 +108,7 @@ def get_assign_tasks_model():
         if model.pResourceType[iResource] == 2:
             # return sum(model.v01JobDone[iJob, iSlot, iMode] * model.pNeeds[iJob, iMode, iResource]
             return sum(model.v01JobMode[iJob, iMode] * model.pNeeds[iJob, iMode, iResource]
-                       for iJob in model.sJobs if (iJob, iMode, iResource) in model.pNeeds) <= model.pAvailability[
-                       iResource]
+                       for iJob in model.sJobs if (iJob, iMode, iResource) in model.pNeeds) <= model.pAvailability[iResource]
         return Constraint.Skip
 
     # c4: precedence between tasks should be respected
@@ -208,7 +192,7 @@ def get_assign_tasks_model():
     return model
 
 
-class Loop_solver(Experiment):
+class Brute_solver(Experiment):
     """
     Model created with Pyomo.
     """
@@ -219,7 +203,7 @@ class Loop_solver(Experiment):
         super().__init__(instance, solution)
         return
 
-    def get_input_data(self, jobsToSolve=-1, previusSlots=1):
+    def get_input_data(self):
         """
         Prepair the data for the model.
         """
@@ -227,15 +211,11 @@ class Loop_solver(Experiment):
         data = self.instance.to_dict()
         self.input_data = {}
 
-        if jobsToSolve == -1:
-            jobsToSolve = len(list(set([j["id"] for j in data["jobs"]])))
-
-        jobs = list(set([j["id"] for j in data["jobs"] if j["id"] <= jobsToSolve]))
+        jobs = list(set([j["id"] for j in data["jobs"]]))
         modes = list(set([d["mode"] for d in data["durations"]]))
         resources = [r["id"] for r in data["resources"]]
-        jobs_durations = {(d["job"], d["mode"]): d["duration"] for d in data["durations"] if d["job"] <= jobsToSolve}
-        resources_needs = {(n["job"], n["mode"], n["resource"]): n["need"] for n in data["needs"] if
-                           n["job"] <= jobsToSolve}
+        jobs_durations = {(d["job"], d["mode"]): d["duration"] for d in data["durations"]}
+        resources_needs = {(n["job"], n["mode"], n["resource"]): n["need"] for n in data["needs"]}
 
         for j in jobs:
             for m in modes:
@@ -243,17 +223,10 @@ class Loop_solver(Experiment):
                 if (j, m) in jobs_durations and jobs_durations[(j, m)] == 0:
                     jobs_durations[(j, m)] = 1
 
-        max_duration_new_job = 0
-        mode_max_duration = 1
-        for m in modes:
-            if (jobs[-1], m) in jobs_durations.keys():
-                if jobs_durations[jobs[-1], m] >= max_duration_new_job:
-                    max_duration_new_job = jobs_durations[jobs[-1], m]
-                    mode_max_duration = m
-
-        periods = [p for p in range(1, 1 + int(previusSlots + max_duration_new_job))]
+        max_duration = {j: max(jobs_durations[j, m] for m in modes if (j, m) in jobs_durations.keys()) for j in jobs}
+        periods = [p for p in range(1, sum(v for v in max_duration.values()))]
         total_resources = {r["id"]: r["available"] for r in data["resources"]}
-        jobs_precedence_1 = [(j["id"], j["successors"]) for j in data["jobs"] if j["id"] <= jobsToSolve]
+        jobs_precedence_1 = [(j["id"], j["successors"]) for j in data["jobs"]]
         jobs_precedence = sum([[(a, c) for c in b] for (a, b) in jobs_precedence_1], [])
 
         self.input_data["sJobs"] = {None: jobs}
@@ -280,95 +253,39 @@ class Loop_solver(Experiment):
                 successor01[(j1, j2)] = 0
 
         for e in jobs_precedence:
-            if e[1] <= jobsToSolve:
-                successor01[(e[0], e[1])] = 1
+            successor01[(e[0], e[1])] = 1
 
         self.input_data['p01Successor'] = successor01
+
         self.input_data['pSlot'] = {s: s for s in periods}
 
-        return {None: self.input_data}, max_duration_new_job, mode_max_duration
+        return {None: self.input_data}
 
     def solve(self, options, print_file=False):
         """
         Solve the problem.
         """
+        model = get_assign_tasks_model()
+
+        data = self.get_input_data()
 
         # parameters of the resolution.
+
         if "timeLimit" in options:
             if "SOLVER_PARAMETERS" in options:
                 options["SOLVER_PARAMETERS"]["sec"] = options["timeLimit"]
             else:
                 options["SOLVER_PARAMETERS"] = {"sec": options["timeLimit"]}
 
-        model = get_assign_tasks_model()
+        model_instance = model.create_instance(data, report_timing=True)
+        opt = SolverFactory('cbc')
 
-        dataDict = self.instance.to_dict()
-        listJobs = list(set([j["id"] for j in dataDict["jobs"]]))
-
-        # Loop for solving the problem
-        for loop_jobs in listJobs:
-            if loop_jobs == 2:
-                # First we solve without warmstart
-                # Get the data
-                data, max_duration_new_job, mode_max_duration = self.get_input_data(jobsToSolve=loop_jobs)
-                model_instance = model.create_instance(data, report_timing=True)
-                opt = SolverFactory('cbc')
-                opt.options.update(options["SOLVER_PARAMETERS"])
-                result = opt.solve(model_instance, tee=True)
-
-                if get_status(result) != 'optimal':
-                    print("Not optimal, loop break")
-                    return -5
-
-                previous_instance = model_instance
-
-            elif loop_jobs > 2:
-                # We solve starting with previous solution and add new job
-                # Get the data
-                data, max_duration_new_job, mode_max_duration = self.get_input_data(jobsToSolve=loop_jobs,
-                                                                                    previusSlots=value(
-                                                                                        previous_instance.vMaxSlot))
-                model_instance = model.create_instance(data, report_timing=True)
-                # Initialize previous solution
-                for j in previous_instance.sJobs:
-                    for s in previous_instance.sSlots:
-                        if s <= model_instance.sSlots[-1]:
-                            for m in previous_instance.sModes:
-                                model_instance.v01Start[j, s].value = value(previous_instance.v01Start[j, s])
-                                model_instance.v01End[j, s].value = value(previous_instance.v01End[j, s])
-                                model_instance.v01JobDone[j, s, m].value = value(previous_instance.v01JobDone[j, s, m])
-                                model_instance.v01JobMode[j, m].value = value(previous_instance.v01JobMode[j, m])
-                                model_instance.vMaxSlot.value = value(previous_instance.vMaxSlot)
-
-                # Initialize new job, first to 0
-                for n in range(int(value(previous_instance.vMaxSlot) + 1),
-                               int(value(previous_instance.vMaxSlot) + max_duration_new_job + 1)):
-                    model_instance.v01Start[loop_jobs, n].value = 0
-                    model_instance.v01End[loop_jobs, n].value = 0
-                for m in model_instance.sModes:
-                    model_instance.v01JobMode[loop_jobs, m].value = 0
-
-                # Then to 1 only when true
-                model_instance.v01Start[loop_jobs, int(value(previous_instance.vMaxSlot) + 1)].value = 1
-                model_instance.v01End[loop_jobs,
-                                      int(value(previous_instance.vMaxSlot) + max_duration_new_job)].value = 1
-                for n in range(int(value(previous_instance.vMaxSlot) + 1),
-                               int(value(previous_instance.vMaxSlot) + max_duration_new_job + 1)):
-                    model_instance.v01JobDone[loop_jobs, n, int(mode_max_duration)].value = 1
-                model_instance.v01JobMode[loop_jobs, int(mode_max_duration)].value = 1
-
-                # WarmStart
-                write_cbc_warmstart_file("./cbc_warmstart.soln", model_instance, opt)
-                result = opt.solve(model_instance, tee=True)
-                print("Jobs solved:", loop_jobs)
-                if get_status(result) != 'optimal':
-                    print("Not optimal, loop break")
-                    return -5
-
-                previous_instance = model_instance
+        opt.options.update(options["SOLVER_PARAMETERS"])
+        result = opt.solve(model_instance, tee=True)
 
         self.status = get_status(result)
         self.model_solution = model_instance
+        print(self.status)
 
         if is_feasible(self.status):
             if print_file:
@@ -392,7 +309,7 @@ class Loop_solver(Experiment):
 
         for j in instance.sJobs:
             for s in instance.sSlots:
-                if value(instance.v01Start[j, s]) == 1:
+                if value(instance.v01Start[j,s]) == 1:
                     dict_start[j] = int(s)
 
         dict_mode = var_to_dict(instance.v01JobMode)
