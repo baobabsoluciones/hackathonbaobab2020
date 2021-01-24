@@ -10,7 +10,7 @@ SOLVER_STATUS = {4: "optimal", 2: "maxTimeLimit", 3: "infeasible", 0: "unknown"}
 
 SOLVER_PARAMETERS = {
     # maximum resolution time of each iteration.
-    "sec": 300,
+    "sec": 120,
     # accepted absolute gap
     "allow": 1,
     # accepted relative gap (0.01 = 1%)
@@ -18,6 +18,7 @@ SOLVER_PARAMETERS = {
     # model tolerance
     "primalT": 10 ** -7,
 }
+
 
 def is_feasible(status):
     """
@@ -78,7 +79,7 @@ def get_assign_tasks_model():
     model.pDuration = Param(model.sJobs, model.sModes, mutable=True)
     model.pNeeds = Param(model.sJobs, model.sModes, model.sResources, mutable=True)
     model.pAvailability = Param(model.sResources, mutable=True)
-    model.pResourceType = Param(model.sResources, mutable=True) # 1 is renewable 2 not renewable
+    model.pResourceType = Param(model.sResources, mutable=True)  # 1 is renewable 2 not renewable
     model.p01Successor = Param(model.sJobs, model.sJobs, mutable=True, domain=Binary)
     model.pSlot = Param(model.sSlots, mutable=True)
 
@@ -92,54 +93,58 @@ def get_assign_tasks_model():
     # Model constraint definition
     # c1: the start time of a task should be earlier than the end time
     def c1_start_before_end(model, iJob):
-        return sum(model.v01End[iJob, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots)\
+        return sum(model.v01End[iJob, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots) \
                >= sum(model.v01Start[iJob, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots)
 
     # c2: the renewable resources used during each period should be inferior to the resource availability
     def c2_renewable_resources(model, iSlot, iResource, iMode):
         if model.pResourceType[iResource] == 1:
             return sum(model.v01JobDone[iJob, iSlot, iMode] * model.pNeeds[iJob, iMode, iResource]
-                       for iJob in model.sJobs) <= model.pAvailability[iResource]
+                       for iJob in model.sJobs if (iJob, iMode, iResource) in model.pNeeds) <= model.pAvailability[iResource]
         return Constraint.Skip
 
     # c3: the total non renewable resources used should be inferior to the resource availability
     def c3_non_renewable_resources(model, iResource, iMode):
         if model.pResourceType[iResource] == 2:
-            return sum(model.v01JobDone[iJob, iSlot, iMode] * model.pNeeds[iJob, iMode, iResource]
-                       for iJob in model.sJobs for iSlot in model.sSlots) <= model.pAvailability[iResource]
+            # return sum(model.v01JobDone[iJob, iSlot, iMode] * model.pNeeds[iJob, iMode, iResource]
+            return sum(model.v01JobMode[iJob, iMode] * model.pNeeds[iJob, iMode, iResource]
+                       for iJob in model.sJobs if (iJob, iMode, iResource) in model.pNeeds) <= model.pAvailability[iResource]
         return Constraint.Skip
 
     # c4: precedence between tasks should be respected
     def c4_precedence(model, iJob, iJob2):
         if iJob != iJob2:
-            return sum(model.v01Start[iJob2, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots)\
+            return sum(model.v01Start[iJob2, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots) \
                    >= (sum(model.v01End[iJob, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots) + 1) \
                    * model.p01Successor[iJob, iJob2]
         return Constraint.Skip
 
     # c5: the number of slots in which the job is done should be equal to the job duration
     def c5_duration(model, iJob, iMode):
-        return sum(model.v01JobDone[iJob, iSlot, iMode] for iSlot in model.sSlots) == model.pDuration[iJob, iMode] \
-               * model.v01JobMode[iJob, iMode]
+        if (iJob, iMode) in model.pDuration:
+            return sum(model.v01JobDone[iJob, iSlot, iMode] for iSlot in model.sSlots) == model.pDuration[iJob, iMode] \
+                   * model.v01JobMode[iJob, iMode]
+        return Constraint.Skip
 
     # c6: the difference between the start and the end of a job is equal to its duration
     def c6_duration2(model, iJob):
         return sum(model.v01End[iJob, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots) \
                - sum(model.v01Start[iJob, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots) \
-               == sum(model.v01JobMode[iJob, iMode] * model.pDuration[iJob, iMode] for iMode in model.sModes) - 1
+               == sum(model.v01JobMode[iJob, iMode] * model.pDuration[iJob, iMode] for iMode in model.sModes
+                      if (iJob, iMode) in model.pDuration) - 1
 
     # c7: if a job ends in slot S, then the job is done in slot S but it is not done in slot S+1
     def c7_end_continuity(model, iJob, iSlot, iMode):
         if model.pSlot[iSlot] != model.pNumberSlots:  # TODO ver si funciona con ord(iSlot)
             return model.v01JobDone[iJob, iSlot, iMode] \
-                   <= model.v01JobDone[iJob, iSlot+1, iMode] + model.v01End[iJob, iSlot]
+                   <= model.v01JobDone[iJob, iSlot + 1, iMode] + model.v01End[iJob, iSlot]
         return Constraint.Skip
 
     # c8: if a job starts in slot S+1, then the job is done in slot S+1 but it is not done in slot S
     def c8_start_continuity(model, iJob, iSlot, iMode):  # TODO ver si funciona con ord(iSlot), sino pSlot[iSlot]
         if model.pSlot[iSlot] != model.pNumberSlots:
-            return model.v01JobDone[iJob, iSlot+1, iMode] \
-                   <= model.v01JobDone[iJob, iSlot, iMode] + model.v01Start[iJob, iSlot+1]
+            return model.v01JobDone[iJob, iSlot + 1, iMode] \
+                   <= model.v01JobDone[iJob, iSlot, iMode] + model.v01Start[iJob, iSlot + 1]
         return Constraint.Skip
 
     # c9: the job can only start once
@@ -187,7 +192,6 @@ def get_assign_tasks_model():
     return model
 
 
-
 class Loop_solver(Experiment):
     """
     Model created with Pyomo.
@@ -220,18 +224,17 @@ class Loop_solver(Experiment):
         modes = list(set([d["mode"] for d in data["durations"]]))
         resources = [r["id"] for r in data["resources"]]
         jobs_durations = {(d["job"], d["mode"]): d["duration"] for d in data["durations"]}
-        max_duration = {j: max(jobs_durations[j, m] for m in modes if (j, m) in jobs_durations.keys()) for j in jobs}
-        periods = [p for p in range(1, sum(v for v in max_duration.values()))]
-        periods = list(range(1,50))
         resources_needs = {(n["job"], n["mode"], n["resource"]): n["need"] for n in data["needs"]}
+
         for j in jobs:
             for m in modes:
-                if (j, m) not in jobs_durations:
-                    jobs_durations[(j, m)] = 0
-                for r in resources:
-                    if (j, m, r) not in resources_needs:
-                        resources_needs[(j, m, r)] = 0
+                # Change duration of 0 to 1, for coherence with formulation
+                if (j, m) in jobs_durations and jobs_durations[(j, m)] == 0:
+                    jobs_durations[(j, m)] = 1
 
+        max_duration = {j: max(jobs_durations[j, m] for m in modes if (j, m) in jobs_durations.keys()) for j in jobs}
+        periods = [p for p in range(1, sum(v for v in max_duration.values()))]
+        #periods = list(range(1, 40))
         total_resources = {r["id"]: r["available"] for r in data["resources"]}
         jobs_precedence_1 = [(j["id"], j["successors"]) for j in data["jobs"]]
         jobs_precedence = sum([[(a, c) for c in b] for (a, b) in jobs_precedence_1], [])
@@ -241,15 +244,13 @@ class Loop_solver(Experiment):
         self.input_data["sResources"] = {None: resources}
         self.input_data["pDuration"] = jobs_durations
         self.input_data["sSlots"] = {None: periods}
-        # self.input_data["sSlots"] = {None: set(map(str,range(1, 40)))}
         self.input_data["pNeeds"] = resources_needs
         self.input_data["pAvailability"] = total_resources
 
         # Campos nuevos
         self.input_data['pNumberSlots'] = {None: len(periods)}
-        # self.input_data['pNumberSlots'] = {None: 40}
 
-        resource_type = dict() # 1 is renewable 2 not renewable
+        resource_type = dict()  # 1 is renewable 2 not renewable
         for r in resources:
             if "R" in r:
                 resource_type[r] = 1
@@ -261,7 +262,7 @@ class Loop_solver(Experiment):
         successor01 = dict()
         for j1 in jobs:
             for j2 in jobs:
-                successor01[(j1,j2)] = 0
+                successor01[(j1, j2)] = 0
 
         for e in jobs_precedence:
             successor01[(e[0], e[1])] = 1
@@ -281,7 +282,6 @@ class Loop_solver(Experiment):
         data = self.get_input_data()
 
         # parameters of the resolution.
-
 
         if "timeLimit" in options:
             if "SOLVER_PARAMETERS" in options:
@@ -317,8 +317,14 @@ class Loop_solver(Experiment):
     def format_solution(self):
 
         instance = self.model_solution
-        dict_start = var_to_dict(instance.vStart)
-        dict_mode = var_to_dict(instance.v01Mode)
+        dict_start = dict()
+
+        for j in instance.sJobs:
+            for s in instance.sSlots:
+                if value(instance.v01Start[j,s]) == 1:
+                    dict_start[j] = int(s)
+
+        dict_mode = var_to_dict(instance.v01JobMode)
         set_jobs = [i for i in instance.sJobs]
 
         mode_no_denso = dict()
