@@ -125,8 +125,8 @@ A small example of how to use the existing code is available in `execution/test_
 Below an example:
 
 ```python
-from core import Instance
-from solvers import get_solver
+from hackathonbaobab2020.core import Instance
+from hackathonbaobab2020.solvers import get_solver
 
 # get mm file
 path = "data/c15.mm/c154_3.mm"

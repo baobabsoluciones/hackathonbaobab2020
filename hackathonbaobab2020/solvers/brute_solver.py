@@ -1,7 +1,5 @@
-from core import Experiment, Solution
+from hackathonbaobab2020.core import Experiment, Solution
 
-import pyomo
-import pyomo.opt
 from pyomo.environ import *
 from pyomo.environ import SolverFactory
 import pytups as pt

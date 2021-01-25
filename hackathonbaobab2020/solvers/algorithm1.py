@@ -1,4 +1,4 @@
-from core import Experiment, Solution
+from hackathonbaobab2020.core import Experiment, Solution
 import copy
 import pytups as pt
 

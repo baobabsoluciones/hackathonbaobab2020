@@ -2,9 +2,8 @@ import sys, os
 prev_dir = os.path.join(sys.path[0], '..')
 sys.path.insert(1, prev_dir)
 import unittest
-import execution.run_batch as run
-import solvers as pkg_solvers
-import core.experiment as exp
+import hackathonbaobab2020.execution.run_batch as run
+from hackathonbaobab2020 import core as exp, solvers as pkg_solvers
 import shutil
 
 

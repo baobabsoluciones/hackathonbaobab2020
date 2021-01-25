@@ -7,11 +7,11 @@ from .brute_solver import Brute_solver
 
 solvers = \
     dict(default=Algorithm,
-		 Milp_LP_HL = Milp1,
-         ortools=CPModel1,
-         Iterator_HL = Iterator1,
-         loop_EJ=Loop_solver,
-         brute_EJ = Brute_solver,
+		 # Milp_LP_HL = Milp1,
+         # ortools=CPModel1,
+         # Iterator_HL = Iterator1,
+         # loop_EJ=Loop_solver,
+         # brute_EJ = Brute_solver,
          )
 
 # factory of solvers

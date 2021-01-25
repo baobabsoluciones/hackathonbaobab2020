@@ -1,5 +1,5 @@
 from ortools.sat.python import cp_model
-from core.experiment import Experiment, Solution
+from hackathonbaobab2020.core import Experiment, Solution
 import pytups as pt
 
 

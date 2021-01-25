@@ -1,7 +1,6 @@
-from core import Instance
-from solvers import get_solver
+from hackathonbaobab2020.core import Instance
+from hackathonbaobab2020.solvers import get_solver
 import logging as log
-
 
 def solve_example_problem_json(dataset, instance_name, solver_name='default'):
     log.basicConfig(level=log.DEBUG)

@@ -1,10 +1,10 @@
-from core import Instance, Experiment, ZipBatch
+from hackathonbaobab2020.core import Instance, ZipBatch
+import hackathonbaobab2020.core.tools as tools
+from hackathonbaobab2020.solvers import get_solver
 import zipfile
 import os
-from solvers import get_solver
 import shutil
 from timeit import default_timer as timer
-import core.tools as tools
 import logging as log
 
 
@@ -53,6 +53,7 @@ def solve_zip(zip_name, path_out, path_in='data/', solver_name='default', test=F
         # export everything:
         status_conv = {4: "Optimal", 2: "Feasible", 3: "Infeasible", 0: "Unknown"}
         _log = dict(time=timer() - start, solver=solver_name, status=status_conv.get(status, "Unknown"))
+        _log.update(options)
         tools.write_json(_log, os.path.join(experiment_dir, 'options.json'))
         inst.to_json(os.path.join(experiment_dir, 'input.json'))
         if algo.solution is not None:

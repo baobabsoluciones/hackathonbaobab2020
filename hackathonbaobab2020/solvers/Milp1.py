@@ -1,11 +1,13 @@
 
-from solvers.milp_LP_HL.model import get_model
+from hackathonbaobab2020.solvers.milp_LP_HL.model import get_model
 from pyomo.environ import SolverFactory
-from core import Experiment, Solution
-from solvers.milp_LP_HL.pyomo_utils import is_feasible, get_status, var_to_dict
-from solvers.milp_LP_HL.configuration import SOLVER_PARAMETERS, MAX_PERIOD
-from solvers.milp_LP_HL.project_utils import reverse_dict, get_status_value
+from hackathonbaobab2020.core import Experiment, Solution
+from hackathonbaobab2020.solvers.milp_LP_HL.pyomo_utils import is_feasible, get_status, var_to_dict
+from hackathonbaobab2020.solvers.milp_LP_HL.configuration import SOLVER_PARAMETERS, MAX_PERIOD
+from hackathonbaobab2020.solvers.milp_LP_HL.project_utils import reverse_dict, get_status_value
+
 import pytups as pt
+
 
 class Milp1(Experiment):
     """
