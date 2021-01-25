@@ -12,6 +12,7 @@ from solvers.milp_LP_HL.resources_subproblem import solve_resource_subproblem
 from itertools import product
 import pytups as pt
 import pyomo.environ as pyo
+import logging as log
 
 
 class Iterator1(Experiment):
@@ -24,7 +25,7 @@ class Iterator1(Experiment):
             solution = Solution({})
         super().__init__(instance, solution)
         self.input_data = {}
-        print("\nSolving with Iterator1")
+        log.debug("\nSolving with Iterator1")
     
     def get_input_data(self, max_period=MAX_PERIOD):
         """
@@ -70,7 +71,7 @@ class Iterator1(Experiment):
         """
         Solve the problem.
         """
-        print(options)
+        log.debug(options)
         model = get_model()
         
         data = self.get_input_data()
@@ -92,12 +93,12 @@ class Iterator1(Experiment):
         self.iterator = BaseIterator(model_instance, opt, verbose=False)
         status, obj = self.get_initial_solution(step=5, modes_steps=3)
         
-        print("Solving the complete problem")
+        log.debug("Solving the complete problem")
         status, obj = self.iterator.solve()
         
         self.status = status
         self.model_solution = self.iterator.instance
-        print("Status: {}  Objective value: {}".format(self.status, obj))
+        log.debug("Status: {}  Objective value: {}".format(self.status, obj))
 
         if is_feasible(self.status):
             if print_file:
@@ -122,7 +123,7 @@ class Iterator1(Experiment):
             resources_left = {r:(pMaxResources[r] - current_resources[r]) for r in sNResources}
         else:
             resources_left = pMaxResources
-        print(resources_left)
+        log.debug(resources_left)
         modes_n_resources = {(j, m): sum((pResourcesUsed[(j, r, m)] / resources_left[r])
                                          if resources_left[r] > 0 else 1000
                                         for r in sNResources if (j, r, m) in pResourcesUsed) for (j, m) in sJobsModes}
@@ -192,7 +193,7 @@ class Iterator1(Experiment):
             
             self.iteration[i] = self.iterator.iterate(free_indices, fixed_indices,
                                                       excluded_constraints=["c10_precedence", "c9_max_n_resources"])
-            print("Iteration {} status: {} obj: {} ".format(i, self.iteration[i][0], self.iteration[i][1]))
+            log.debug("Iteration {} status: {} obj: {} ".format(i, self.iteration[i][0], self.iteration[i][1]))
             makespan = pyo.value(self.iterator.get_variable("vMakespan"))
             k = max_j
             
@@ -205,7 +206,7 @@ class Iterator1(Experiment):
             # first_modes = [(j, modes_order[j][0]) for j in sJobs]
             
             if not is_feasible(self.iteration[i][0]):
-                print("Error encountered")
+                log.debug("Error encountered")
                 break
 
         status, obj = self.iteration[i]
@@ -219,11 +220,11 @@ class Iterator1(Experiment):
         fixed_indices = {"sJobs": [], "sPeriods": self.input_data["sPeriods"][None],
                          "sJobsModes": [], "sResources": []}
         status, obj = self.iterator.iterate(free_indices, fixed_indices)
-        print(status)
+        log.debug(status)
         
         if is_feasible(status):
             # Add the other modes little by little
-            print("Adding all the modes")
+            log.debug("Adding all the modes")
             k = 0
             i = 0
             
@@ -233,9 +234,9 @@ class Iterator1(Experiment):
                 free_jobs = range(k, max_j)
                 status, obj = self.solve_with_free_jobs_modes(free_jobs)
                 k = max_j
-                print("iteration {} status: {} obj: {} ".format(i, status, obj))
+                log.debug("iteration {} status: {} obj: {} ".format(i, status, obj))
                 if not is_feasible(status):
-                    print("Error encountered")
+                    log.debug("Error encountered")
                     break
 
             makespan = pyo.value(self.iterator.get_variable("vMakespan"))

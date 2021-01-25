@@ -6,14 +6,11 @@ import pytups as pt
 class Algorithm(Experiment):
 
     def __init__(self, instance, solution=None):
-        if solution is None:
-            solution = {}
         super().__init__(instance, solution)
         return
 
     def solve(self, options):
         # takes into account successors
-        print(self.instance.data)
         jobs = copy.deepcopy(self.instance.data['jobs'])
         all_jobs = set(jobs.keys())
         solution = pt.SuperDict()

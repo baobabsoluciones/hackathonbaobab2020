@@ -1,8 +1,10 @@
 from core import Instance
 from solvers import get_solver
+import logging as log
 
 
 def solve_example_problem_json(dataset, instance_name, solver_name='default'):
+    log.basicConfig(level=log.DEBUG)
     directory = 'data/'
     path = '{}{}/{}.mm'.format(directory, dataset, instance_name)
     instance = Instance.from_mm(path)
@@ -21,10 +23,10 @@ if __name__ == '__main__':
     # instance_name = 'j3064_10'
     # dataset = 'r5.mm'
     # instance_name = 'r564_10'
-    dataset = 'm5.mm'
-    instance_name = 'm564_10'
+    dataset = 'c15.mm'
+    instance_name = 'c154_3'
 
     # solve_example_problem_json(dataset, instance_name, solver='')
-    exp = solve_example_problem_json(dataset, instance_name, solver_name='ortools')
+    exp = solve_example_problem_json(dataset, instance_name, solver_name='loop_EJ')
     exp.graph()
 

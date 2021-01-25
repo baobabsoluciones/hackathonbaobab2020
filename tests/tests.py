@@ -42,18 +42,23 @@ class HackathonTests(unittest.TestCase):
         shutil.rmtree(self.path_out)
 
     def run_scenario_instance(self, scenario, instance):
-        run.solve_zip(
-            zip_name='./{}.zip'.format(scenario),
-            path_out=self.path_out,
-            path_in='tests/',
-            solver_name=self.solver,
-            test=False,
-            instances=[instance],
-            options=dict(timeLimit=120, gapRel=1)
-        )
+        try:
+            run.solve_zip(
+                zip_name='./{}.zip'.format(scenario),
+                path_out=self.path_out,
+                path_in='tests/',
+                solver_name=self.solver,
+                test=False,
+                instances=[instance],
+                options=dict(timeLimit=120, gapRel=1)
+            )
 
-        experiment = exp.Experiment.from_json(self.path_out + scenario + '/' + instance)
-        return experiment.check_solution()
+            experiment = exp.Experiment.from_json(self.path_out + scenario + '/' + instance)
+            return experiment.check_solution()
+        except Exception as e:
+            raise TestFail("Test failed for solver {}: {}".format(
+                self.solver, e
+            ))
 
     # def test_j10(self):
     #     return self.run_scenario_instance('j10.mm', 'j102_2.mm')
@@ -96,6 +101,9 @@ def suite():
         suite.addTests(tests)
     return suite
 
+
+class TestFail(Exception):
+    pass
 
 if __name__ == '__main__':
     # Tests

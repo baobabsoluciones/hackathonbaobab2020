@@ -5,6 +5,7 @@ import pyomo.opt
 from pyomo.environ import *
 from pyomo.environ import SolverFactory
 import pytups as pt
+import logging as log
 
 SOLVER_STATUS = {4: "optimal", 2: "maxTimeLimit", 3: "infeasible", 0: "unknown"}
 
@@ -214,8 +215,6 @@ class Loop_solver(Experiment):
     """
 
     def __init__(self, instance, solution=None):
-        if solution is None:
-            solution = {}
         super().__init__(instance, solution)
         return
 
@@ -288,17 +287,17 @@ class Loop_solver(Experiment):
 
         return {None: self.input_data}, max_duration_new_job, mode_max_duration
 
-    def solve(self, options, print_file=False):
+    def solve(self, options):
         """
         Solve the problem.
         """
-
+        print_file = options.get('print_file', False)
+        debug = log.root.level == log.DEBUG
         # parameters of the resolution.
+        if "SOLVER_PARAMETERS" not in options:
+            options["SOLVER_PARAMETERS"] = {}
         if "timeLimit" in options:
-            if "SOLVER_PARAMETERS" in options:
-                options["SOLVER_PARAMETERS"]["sec"] = options["timeLimit"]
-            else:
-                options["SOLVER_PARAMETERS"] = {"sec": options["timeLimit"]}
+            options["SOLVER_PARAMETERS"]["sec"] = options["timeLimit"]
 
         model = get_assign_tasks_model()
 
@@ -311,10 +310,10 @@ class Loop_solver(Experiment):
                 # First we solve without warmstart
                 # Get the data
                 data, max_duration_new_job, mode_max_duration = self.get_input_data(jobsToSolve=loop_jobs)
-                model_instance = model.create_instance(data, report_timing=True)
+                model_instance = model.create_instance(data, report_timing=debug)
                 opt = SolverFactory('cbc')
                 opt.options.update(options["SOLVER_PARAMETERS"])
-                result = opt.solve(model_instance, tee=True)
+                result = opt.solve(model_instance, tee=debug)
 
                 if get_status(result) != 'optimal':
                     print("Not optimal, loop break")
@@ -328,7 +327,7 @@ class Loop_solver(Experiment):
                 data, max_duration_new_job, mode_max_duration = self.get_input_data(jobsToSolve=loop_jobs,
                                                                                     previusSlots=value(
                                                                                         previous_instance.vMaxSlot))
-                model_instance = model.create_instance(data, report_timing=True)
+                model_instance = model.create_instance(data, report_timing=debug)
                 # Initialize previous solution
                 for j in previous_instance.sJobs:
                     for s in previous_instance.sSlots:
@@ -359,10 +358,10 @@ class Loop_solver(Experiment):
 
                 # WarmStart
                 write_cbc_warmstart_file("./cbc_warmstart.soln", model_instance, opt)
-                result = opt.solve(model_instance, tee=True)
-                print("Jobs solved:", loop_jobs)
+                result = opt.solve(model_instance, tee=debug)
+                log.debug("Jobs solved:{}".format(loop_jobs))
                 if get_status(result) != 'optimal':
-                    print("Not optimal, loop break")
+                    log.debug("Not optimal, loop break")
                     return -5
 
                 previous_instance = model_instance

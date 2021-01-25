@@ -5,6 +5,7 @@ from solvers import get_solver
 import shutil
 from timeit import default_timer as timer
 import core.tools as tools
+import logging as log
 
 
 def solve_zip(zip_name, path_out, path_in='data/', solver_name='default', test=False, instances=None, options=None):
@@ -13,6 +14,10 @@ def solve_zip(zip_name, path_out, path_in='data/', solver_name='default', test=F
     batch_out_path = os.path.join(path_out, os.path.splitext(zip_name)[0])
     if options is None:
         options = {}
+    if options.get('DEBUG', False):
+        log.basicConfig(level=log.DEBUG)
+    else:
+        log.basicConfig(level=log.INFO)
     # we recreate the whole batch output file
     # if os.path.exists(batch_out_path):
     #     shutil.rmtree(batch_out_path)
@@ -29,7 +34,7 @@ def solve_zip(zip_name, path_out, path_in='data/', solver_name='default', test=F
     solver = get_solver(solver_name)
     # for each file:
     for filename in all_files:
-    # filename = all_files[0]
+        # filename = all_files[0]
         experiment_dir = os.path.join(batch_out_path, filename)
         if os.path.exists(experiment_dir):
             shutil.rmtree(experiment_dir)
@@ -47,8 +52,8 @@ def solve_zip(zip_name, path_out, path_in='data/', solver_name='default', test=F
 
         # export everything:
         status_conv = {4: "Optimal", 2: "Feasible", 3: "Infeasible", 0: "Unknown"}
-        log = dict(time=timer() - start, solver=solver_name, status=status_conv.get(status, "Unknown"))
-        tools.write_json(log, os.path.join(experiment_dir, 'options.json'))
+        _log = dict(time=timer() - start, solver=solver_name, status=status_conv.get(status, "Unknown"))
+        tools.write_json(_log, os.path.join(experiment_dir, 'options.json'))
         inst.to_json(os.path.join(experiment_dir, 'input.json'))
         if algo.solution is not None:
             algo.solution.to_json(os.path.join(experiment_dir, 'output.json'))
