@@ -31,10 +31,10 @@ class Experiment(object):
         except:
             solution = None
         return cls(instance, solution)
-
+    
     def solve(self, options):
         raise NotImplementedError("complete this!")
-
+    
     def check_solution(self, list_tests=None, **params):
         func_list = dict(
             successors = self.check_successors,

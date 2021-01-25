@@ -61,6 +61,21 @@ class Instance(object):
         data = dict(resources=availability, jobs=successors, durations=durations.to_dictdict(),
                     needs=needs.to_dictdict())
         return cls(data)
+    
+    def to_dict(self):
+        res = self.data['resources'].values_l()
+        job = self.data['jobs'].values_l()
+        duration =self.data['durations'].to_dictup().to_tuplist().\
+            vapply(lambda v: pt.SuperDict(job=v[0], mode=v[1], duration=v[2]))
+        needs = \
+            self.data['needs'].to_dictup().to_tuplist().\
+            vapply(lambda v: pt.SuperDict(job=v[0], mode=v[1],
+                                          resource=v[2],
+                                          need=v[3]))
+
+        data = pt.SuperDict(jobs=job, resources=res, needs=needs, durations=duration)
+        
+        return data
 
     @classmethod
     def from_dict(cls, data_json):
@@ -78,16 +93,8 @@ class Instance(object):
         return cls.from_dict(data_json)
 
     def to_json(self, path):
-        res = self.data['resources'].values_l()
-        job = self.data['jobs'].values_l()
-        duration =self.data['durations'].to_dictup().to_tuplist().vapply(lambda v: pt.SuperDict(job=v[0], mode=v[1], duration=v[2]))
-        needs = \
-            self.data['needs'].to_dictup().to_tuplist().\
-            vapply(lambda v: pt.SuperDict(job=v[0], mode=v[1],
-                                          resource=v[2],
-                                          need=v[3]))
-
-        data = pt.SuperDict(jobs=job, resources=res, needs=needs, durations=duration)
+        
+        data = self.to_dict()
         with open(path, 'w') as f:
             json.dump(data, f, indent=4, sort_keys=True)
 

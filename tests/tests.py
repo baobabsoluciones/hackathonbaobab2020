@@ -49,7 +49,7 @@ class HackathonTests(unittest.TestCase):
             solver_name=self.solver,
             test=False,
             instances=[instance],
-            options=dict(timeLimit=60, gapRel=1)
+            options=dict(timeLimit=120, gapRel=1)
         )
 
         experiment = exp.Experiment.from_json(self.path_out + scenario + '/' + instance)
