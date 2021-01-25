@@ -18,7 +18,7 @@ with open("requirements.txt", "r") as fh:
 
 kwargs = {
     "name": "hackathonbaobab2020",
-    "version": 0.9,
+    "version": 0.91,
     "packages": packages,
     "description": "Hackathon 2020 at baobab soluciones",
     "long_description": long_description,
