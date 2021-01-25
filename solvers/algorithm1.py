@@ -13,6 +13,7 @@ class Algorithm(Experiment):
 
     def solve(self, options):
         # takes into account successors
+        print(self.instance.data)
         jobs = copy.deepcopy(self.instance.data['jobs'])
         all_jobs = set(jobs.keys())
         solution = pt.SuperDict()

@@ -20,23 +20,23 @@ class Instance(object):
             index('PRECEDENCE RELATIONS:\n')
 
         index_requests = \
-            content.index('REQUESTS/DURATIONS:\n')
+                content.index('REQUESTS/DURATIONS:\n')
 
         index_avail = \
-            content.\
-            index('RESOURCEAVAILABILITIES:\n')
+            content. \
+                index('RESOURCEAVAILABILITIES:\n')
 
         # precedence.
-        precedence = content[index_prec+2:index_requests-1]
+        precedence = content[index_prec + 2:index_requests - 1]
         successors = pt.SuperDict()
         for line in precedence:
             _, job, modes, num_succ, *jobs, _ = re.split('\s+', line)
             successors[int(job)] = pt.TupList(jobs).vapply(int)
-        successors = successors.kvapply(lambda k, v:  dict(successors=v, id=k))
+        successors = successors.kvapply(lambda k, v: dict(successors=v, id=k))
 
         # requests/ durations
-        requests = content[index_requests+3:index_avail - 1]
-        resources = re.findall(r'[RN] \d', content[index_requests+1])
+        requests = content[index_requests + 3:index_avail - 1]
+        resources = re.findall(r'[RN] \d', content[index_requests + 1])
         needs = pt.SuperDict()
         durations = pt.SuperDict()
         last_job = ''
@@ -93,10 +93,9 @@ class Instance(object):
         return cls.from_dict(data_json)
 
     def to_json(self, path):
-        
         data = self.to_dict()
         with open(path, 'w') as f:
             json.dump(data, f, indent=4, sort_keys=True)
 
     def get_renewable_resources(self):
-        return self.data['resources'].kfilter(lambda k: k[0]=='R').keys()
+        return self.data['resources'].kfilter(lambda k: k[0] == 'R').keys()
