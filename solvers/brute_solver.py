@@ -135,13 +135,13 @@ def get_assign_tasks_model():
 
     # c7: if a job ends in slot S, then the job is done in slot S but it is not done in slot S+1
     def c7_end_continuity(model, iJob, iSlot, iMode):
-        if model.pSlot[iSlot] != model.pNumberSlots:  # TODO ver si funciona con ord(iSlot)
+        if model.pSlot[iSlot] != model.pNumberSlots:
             return model.v01JobDone[iJob, iSlot, iMode] \
                    <= model.v01JobDone[iJob, iSlot + 1, iMode] + model.v01End[iJob, iSlot]
         return Constraint.Skip
 
     # c8: if a job starts in slot S+1, then the job is done in slot S+1 but it is not done in slot S
-    def c8_start_continuity(model, iJob, iSlot, iMode):  # TODO ver si funciona con ord(iSlot), sino pSlot[iSlot]
+    def c8_start_continuity(model, iJob, iSlot, iMode):
         if model.pSlot[iSlot] != model.pNumberSlots:
             return model.v01JobDone[iJob, iSlot + 1, iMode] \
                    <= model.v01JobDone[iJob, iSlot, iMode] + model.v01Start[iJob, iSlot + 1]

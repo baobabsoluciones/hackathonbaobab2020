@@ -5,6 +5,9 @@ import pyomo.opt
 from pyomo.environ import *
 from pyomo.environ import SolverFactory
 import pytups as pt
+import time
+
+start_time = time.time()
 
 SOLVER_STATUS = {4: "optimal", 2: "maxTimeLimit", 3: "infeasible", 0: "unknown"}
 
@@ -129,10 +132,9 @@ def get_assign_tasks_model():
 
     # c4: precedence between tasks should be respected
     def c4_precedence(model, iJob, iJob2):
-        if iJob != iJob2:
+        if iJob != iJob2 and model.p01Successor[iJob, iJob2] == 1:
             return sum(model.v01Start[iJob2, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots) \
-                   >= (sum(model.v01End[iJob, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots) + 1) \
-                   * model.p01Successor[iJob, iJob2]
+                   >= (sum(model.v01End[iJob, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots) + 1)
         return Constraint.Skip
 
     # c5: the number of slots in which the job is done should be equal to the job duration
@@ -151,13 +153,13 @@ def get_assign_tasks_model():
 
     # c7: if a job ends in slot S, then the job is done in slot S but it is not done in slot S+1
     def c7_end_continuity(model, iJob, iSlot, iMode):
-        if model.pSlot[iSlot] != model.pNumberSlots:  # TODO ver si funciona con ord(iSlot)
+        if model.pSlot[iSlot] != model.pNumberSlots:
             return model.v01JobDone[iJob, iSlot, iMode] \
                    <= model.v01JobDone[iJob, iSlot + 1, iMode] + model.v01End[iJob, iSlot]
         return Constraint.Skip
 
     # c8: if a job starts in slot S+1, then the job is done in slot S+1 but it is not done in slot S
-    def c8_start_continuity(model, iJob, iSlot, iMode):  # TODO ver si funciona con ord(iSlot), sino pSlot[iSlot]
+    def c8_start_continuity(model, iJob, iSlot, iMode):
         if model.pSlot[iSlot] != model.pNumberSlots:
             return model.v01JobDone[iJob, iSlot + 1, iMode] \
                    <= model.v01JobDone[iJob, iSlot, iMode] + model.v01Start[iJob, iSlot + 1]
@@ -300,26 +302,29 @@ class Loop_solver(Experiment):
             else:
                 options["SOLVER_PARAMETERS"] = {"sec": options["timeLimit"]}
 
+
         model = get_assign_tasks_model()
 
         dataDict = self.instance.to_dict()
         listJobs = list(set([j["id"] for j in dataDict["jobs"]]))
 
+        print("Starting loop")
         # Loop for solving the problem
         for loop_jobs in listJobs:
             if loop_jobs == 2:
                 # First we solve without warmstart
                 # Get the data
                 data, max_duration_new_job, mode_max_duration = self.get_input_data(jobsToSolve=loop_jobs)
-                model_instance = model.create_instance(data, report_timing=True)
+                model_instance = model.create_instance(data)
                 opt = SolverFactory('cbc')
+                SOLVER_PARAMETERS['ratio'] = 0.9
                 opt.options.update(options["SOLVER_PARAMETERS"])
-                result = opt.solve(model_instance, tee=True)
+                result = opt.solve(model_instance)
 
                 if get_status(result) != 'optimal':
                     print("Not optimal, loop break")
                     return -5
-
+                print("Jobs solved: ", loop_jobs, ", nº Slots:", int(value(model_instance.vMaxSlot)),", time (s):", result.solver.system_time )
                 previous_instance = model_instance
 
             elif loop_jobs > 2:
@@ -328,7 +333,7 @@ class Loop_solver(Experiment):
                 data, max_duration_new_job, mode_max_duration = self.get_input_data(jobsToSolve=loop_jobs,
                                                                                     previusSlots=value(
                                                                                         previous_instance.vMaxSlot))
-                model_instance = model.create_instance(data, report_timing=True)
+                model_instance = model.create_instance(data)
                 # Initialize previous solution
                 for j in previous_instance.sJobs:
                     for s in previous_instance.sSlots:
@@ -359,8 +364,12 @@ class Loop_solver(Experiment):
 
                 # WarmStart
                 write_cbc_warmstart_file("./cbc_warmstart.soln", model_instance, opt)
-                result = opt.solve(model_instance, tee=True)
-                print("Jobs solved:", loop_jobs)
+                if loop_jobs == listJobs[-2]:
+                    SOLVER_PARAMETERS['ratio'] = 0.01
+                    opt.options.update(options["SOLVER_PARAMETERS"])
+
+                result = opt.solve(model_instance)
+                print("Jobs solved: ", loop_jobs, ", nº Slots:", int(value(model_instance.vMaxSlot)),", time (s):", result.solver.system_time )
                 if get_status(result) != 'optimal':
                     print("Not optimal, loop break")
                     return -5
@@ -370,6 +379,7 @@ class Loop_solver(Experiment):
         self.status = get_status(result)
         self.model_solution = model_instance
 
+        print("End of loop. Total time:  %.2f seconds" % (time.time() - start_time))
         if is_feasible(self.status):
             if print_file:
                 self.print_instance()

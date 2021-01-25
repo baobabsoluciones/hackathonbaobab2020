@@ -6,8 +6,8 @@ from .brute_solver import Brute_solver
 solvers = \
     dict(default=Algorithm,
          ortools=CPModel1,
-         loop_EJ=Loop_solver,
-         brute_EJ = Brute_solver)
+         loop_EF_JS=Loop_solver,
+         brute_EF_JS=Brute_solver)
 
 # factory of solvers
 def get_solver(name='default'):
