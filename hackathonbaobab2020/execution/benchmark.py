@@ -4,6 +4,8 @@ import random as rn
 import os
 import shutil
 import pandas as pd
+from pygount import SourceAnalysis, ProjectSummary
+from glob import glob
 
 
 def sample_instances(scenario_file, n=5):
@@ -21,12 +23,15 @@ scenarios = ['c15.mm.zip', 'c21.mm.zip', 'j10.mm.zip', 'j30.mm.zip', 'm1.mm.zip'
 solvers = ['default', 'ortools', 'Iterator_HL', 'loop_EJ']
 root_dir = 'benchmark'
 
-def solve_all():
+solvers_to_pattern = dict(default='algorithm1.py', ortools='cp_ortools.py',
+                          loop_EJ='loop_solver.py', brute_EJ='brute_solver.py',
+                          Iterator_HL='milp_LP_HL/*.py')
 
-    # TODO: take this out
-    scenarios = ['c15.mm.zip']
-    # solvers = ['default']
-    # TODO taje out above
+# # TODO: take this out
+# scenarios = ['c15.mm.zip']
+# solvers = ['default', 'ortools']
+
+def solve_all():
 
     options = dict(timeLimit=300, DEBUG=False)
     if os.path.exists(root_dir):
@@ -51,11 +56,33 @@ def solve_all():
 
 def compare():
     table = pd.concat([get_table('{}/{}'.format(root_dir, solver)) for solver in solvers])
+    table.merge(length_code_table())
     table.to_csv('{}/{}'.format(root_dir, 'summary.csv'), index=False)
     print(table.to_markdown())
+    return table
+
+
+def length_code(solver_name):
+    solvers_dir = 'hackathonbaobab2020/solvers/'
+    project_summary = ProjectSummary()
+    source_paths = glob(solvers_dir + solvers_to_pattern[solver_name])
+    for source_path in source_paths:
+        source_analysis = SourceAnalysis.from_file(source_path, "pygount")
+        project_summary.add(source_analysis)
+    lines_of_code = project_summary.language_to_language_summary_map['Python'].code_count
+    return lines_of_code
+
+def length_code_table():
+    lines_of_code = {s: length_code(s) for s in solvers}
+    table = pd.DataFrame.from_records(list(lines_of_code.items())).rename(columns={0:'solver', 1:'lines'})
+    print(table.to_markdown())
+    return table
+
+
 
 if __name__ == '__main__':
     # solve_all()
-    table = compare()
+    length_code_table()
+    # table = compare()
 
     pass
