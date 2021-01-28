@@ -1,4 +1,4 @@
-from run_batch import solve_scenarios_and_zip, solve_zip, get_table
+from run_batch import solve_zip, get_table
 import zipfile
 import random as rn
 import os
@@ -6,6 +6,9 @@ import shutil
 import pandas as pd
 from pygount import SourceAnalysis, ProjectSummary
 from glob import glob
+import seaborn as sns
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 
 
 def sample_instances(scenario_file, n=5):
@@ -56,7 +59,7 @@ def solve_all():
 
 def compare():
     table = pd.concat([get_table('{}/{}'.format(root_dir, solver)) for solver in solvers])
-    table.merge(length_code_table())
+    table = table.merge(length_code_table())
     table.to_csv('{}/{}'.format(root_dir, 'summary.csv'), index=False)
     print(table.to_markdown())
     return table
@@ -79,10 +82,58 @@ def length_code_table():
     return table
 
 
+def graphs(table):
+    # time
+    data =\
+        table. \
+        groupby(['scenario', 'solver'])['time']. \
+        aggregate('mean')
+    sns.set_theme(style="ticks", color_codes=True)
+    sns.catplot(x="solver", y="time", data=data.reset_index())
+    plt.savefig('benchmark/time.png')
+    data.unstack('solver').round(2)
+
+    data = table.groupby('solver')['lines'].aggregate('mean').reset_index()
+    g = sns.barplot(x="solver", y="lines", data=data)
+    plt.savefig('benchmark/length.png')
+
+
+    # errors
+    data = \
+        table. \
+        groupby(['scenario', 'solver'])['errors']. \
+        aggregate('mean').reset_index()
+    data = table
+    g = sns.catplot(x="solver", y="errors", data=data)
+    # g.fig.get_axes()[0].set_yscale('log')
+    # g.set_yscale("log")
+    plt.savefig('benchmark/errors.png')
+
+    # status
+    g = table.\
+        groupby(['solver', 'status'])['scenario'].\
+        aggregate('count').unstack('solver').\
+        T.plot(kind='bar', stacked=True)
+    g.set_xticklabels(g.get_xticklabels(), rotation=0)
+    plt.savefig('benchmark/status.png')
+
+    # relative optimality gap
+    optimal = table[table.solver=='ortools'][['name', 'objective']]
+    data = table.merge(optimal, on='name')
+    data['gap'] = (data.objective_x - data.objective_y)/data.objective_y*100
+    g = sns.catplot(x="solver", y="gap", data=data)
+    plt.savefig('benchmark/gap.png')
+
+
 
 if __name__ == '__main__':
     # solve_all()
-    length_code_table()
-    # table = compare()
+    # length_code_table()
+    table = compare()
+    graphs(table)
+
+
+    print(a)
+    print(table)
 
     pass

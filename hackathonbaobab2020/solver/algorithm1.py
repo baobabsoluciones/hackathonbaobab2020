@@ -16,7 +16,6 @@ class Algorithm(Experiment):
         solution = pt.SuperDict()
         succ = jobs.get_property('successors')
         durations = self.instance.data['durations']
-        needs = self.instance.data['needs']
 
         # algorithm
         period = 0
