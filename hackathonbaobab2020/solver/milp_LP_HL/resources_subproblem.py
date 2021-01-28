@@ -1,7 +1,7 @@
 
 from pyomo.environ import *
 from .configuration import SOLVER_PARAMETERS
-from hackathonbaobab2020.solvers.milp_LP_HL.pyomo_utils import is_feasible, get_status, var_to_dict
+from hackathonbaobab2020.solver.milp_LP_HL.pyomo_utils import is_feasible, get_status, var_to_dict
 
 def get_r_submodel():
     """

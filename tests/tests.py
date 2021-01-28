@@ -3,7 +3,7 @@ prev_dir = os.path.join(sys.path[0], '..')
 sys.path.insert(1, prev_dir)
 import unittest
 import hackathonbaobab2020.execution.run_batch as run
-from hackathonbaobab2020 import core as exp, solvers as pkg_solvers
+from hackathonbaobab2020 import core as exp, solver as pkg_solvers
 import shutil
 
 
@@ -49,7 +49,7 @@ class HackathonTests(unittest.TestCase):
                 solver_name=self.solver,
                 test=False,
                 instances=[instance],
-                options=dict(timeLimit=120, gapRel=1)
+                options=dict(timeLimit=300, gapRel=1)
             )
 
             experiment = exp.Experiment.from_json(self.path_out + scenario + '/' + instance)

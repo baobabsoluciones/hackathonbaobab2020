@@ -1,6 +1,6 @@
 from hackathonbaobab2020.core import Instance, ZipBatch
 import hackathonbaobab2020.core.tools as tools
-from hackathonbaobab2020.solvers import get_solver
+from hackathonbaobab2020.solver import get_solver
 import zipfile
 import os
 import shutil

@@ -1,7 +1,7 @@
 from pyomo.core.expr.current import identify_variables
-from hackathonbaobab2020.solvers.milp_LP_HL.pyomo_utils import *
+from hackathonbaobab2020.solver.milp_LP_HL.pyomo_utils import *
 from copy import deepcopy
-from hackathonbaobab2020.solvers.milp_LP_HL.function_utils import no_duplicates
+from hackathonbaobab2020.solver.milp_LP_HL.function_utils import no_duplicates
 
 
 class BaseIterator:

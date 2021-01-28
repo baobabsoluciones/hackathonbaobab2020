@@ -1,14 +1,14 @@
 
-from hackathonbaobab2020.solvers.milp_LP_HL.model import get_model
+from hackathonbaobab2020.solver.milp_LP_HL.model import get_model
 from pyomo.environ import SolverFactory
 from hackathonbaobab2020.core import Experiment, Solution
-from hackathonbaobab2020.solvers.milp_LP_HL.pyomo_utils import is_feasible, var_to_dict,\
+from hackathonbaobab2020.solver.milp_LP_HL.pyomo_utils import is_feasible, var_to_dict,\
     deactivate_constraint, activate_constraint
-from hackathonbaobab2020.solvers.milp_LP_HL.configuration import SOLVER_PARAMETERS, MAX_PERIOD, MIN_ITERATION_TIME
-from hackathonbaobab2020.solvers.milp_LP_HL.project_utils import reverse_dict, get_status_value
-from hackathonbaobab2020.solvers.milp_LP_HL.generic_iterator import BaseIterator
-from hackathonbaobab2020.solvers.milp_LP_HL.function_utils import Chrono
-from hackathonbaobab2020.solvers.milp_LP_HL.resources_subproblem import solve_resource_subproblem
+from hackathonbaobab2020.solver.milp_LP_HL.configuration import SOLVER_PARAMETERS, MAX_PERIOD, MIN_ITERATION_TIME
+from hackathonbaobab2020.solver.milp_LP_HL.project_utils import reverse_dict, get_status_value
+from hackathonbaobab2020.solver.milp_LP_HL.generic_iterator import BaseIterator
+from hackathonbaobab2020.solver.milp_LP_HL.function_utils import Chrono
+from hackathonbaobab2020.solver.milp_LP_HL.resources_subproblem import solve_resource_subproblem
 from itertools import product
 import pytups as pt
 import pyomo.environ as pyo

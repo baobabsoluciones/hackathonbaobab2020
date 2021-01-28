@@ -63,7 +63,7 @@ def compare():
 
 
 def length_code(solver_name):
-    solvers_dir = 'hackathonbaobab2020/solvers/'
+    solvers_dir = 'hackathonbaobab2020/solver/'
     project_summary = ProjectSummary()
     source_paths = glob(solvers_dir + solvers_to_pattern[solver_name])
     for source_path in source_paths:

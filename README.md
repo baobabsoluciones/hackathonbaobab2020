@@ -126,13 +126,13 @@ Below an example:
 
 ```python
 from hackathonbaobab2020.core import Instance
-from hackathonbaobab2020.solvers import get_solver
+from hackathonbaobab2020.solver import get_solver
 
 # get mm file
 path = "data/c15.mm/c154_3.mm"
 # initialize an instance object
 instance = Instance.from_mm(path)
-# get the default solver (in solvers/algorithm1.py)
+# get the default solver (in solver/algorithm1.py)
 solver = get_solver('default')
 # initialize the solver with the instance
 exp = solver(instance=instance)
