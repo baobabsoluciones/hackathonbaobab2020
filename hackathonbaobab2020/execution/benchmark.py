@@ -24,7 +24,7 @@ solvers = ['default', 'ortools', 'Iterator_HL', 'loop_EJ']
 root_dir = 'benchmark'
 
 solvers_to_pattern = dict(default='algorithm1.py', ortools='cp_ortools.py',
-                          loop_EJ='loop_solver.py', brute_EJ='brute_solver.py',
+                          loop_EJ='loop_solver.py',
                           Iterator_HL='milp_LP_HL/*.py')
 
 # # TODO: take this out

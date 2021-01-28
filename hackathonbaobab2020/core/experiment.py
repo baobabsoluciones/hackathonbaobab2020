@@ -9,6 +9,8 @@ class Experiment(object):
 
     def __init__(self, instance, solution):
         self.instance = instance
+        if solution is None:
+            solution = Solution(pt.SuperDict())
         self.solution = solution
         return
 
@@ -53,12 +55,16 @@ class Experiment(object):
         solution = self.solution.data.to_dictup().to_tuplist().\
             to_dict(result_col=2, indices=[1, 0], is_list=False).\
             to_dictdict()
-        sol_start = solution['period']
-        sol_mode = solution['mode']
+        sol_start = solution.get('period', pt.SuperDict())
+        sol_mode = solution.get('mode', pt.SuperDict())
         sol_finished = sol_start.kvapply(lambda k, v: v + durations[k][sol_mode[k]])
         errors = pt.SuperDict()
         for job, post_jobs in succ.items():
+            if job not in sol_finished:
+                continue
             for job2 in post_jobs:
+                if job2 not in sol_start:
+                    continue
                 if sol_finished[job] > sol_start[job2]:
                     errors[job, job2] = sol_finished[job] - sol_start[job2]
         return errors
@@ -100,7 +106,10 @@ class Experiment(object):
         return errors_R
 
     def get_objective(self, **params):
-        return max(self.get_finished_times().values())
+        finished_time = self.get_finished_times().values()
+        if not len(finished_time):
+            return 0
+        return max(finished_time)
 
     def all_jobs_once(self, **params):
         missing = self.instance.data['jobs'].keys() - self.solution.data.keys()

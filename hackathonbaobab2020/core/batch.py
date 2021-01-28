@@ -128,7 +128,9 @@ class Batch(object):
         if self.errors is not None:
             return self.errors
 
-        self.errors = self.get_cases().vapply(lambda v: v.check_solution()).to_lendict()
+        self.errors = self.get_cases().\
+            vapply(lambda v: v.check_solution().to_lendict().values()).\
+            vapply(sum)
         return self.errors
 
     def get_objective_function(self):
