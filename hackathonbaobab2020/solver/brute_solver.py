@@ -109,7 +109,7 @@ def get_assign_tasks_model():
             # return sum(model.v01JobDone[iJob, iSlot, iMode] * model.pNeeds[iJob, iMode, iResource]
             return sum(model.v01JobMode[iJob, iMode] * model.pNeeds[iJob, iMode, iResource]
                        for iJob in model.sJobs for iMode in model.sModes if (iJob, iMode, iResource) in model.pNeeds) <= \
-                   model.pAvailability[iResource] #+ model.vHNonRenewable[iResource]
+                   model.pAvailability[iResource]  # + model.vHNonRenewable[iResource]
         return Constraint.Skip
 
     # c4: precedence between tasks should be respected
@@ -266,6 +266,9 @@ class Brute_solver(Experiment):
         """
         Solve the problem.
         """
+        print_file = options.get('print_file', False)
+        debug = log.root.level == log.DEBUG
+
         model = get_assign_tasks_model()
 
         data = self.get_input_data()
@@ -284,7 +287,7 @@ class Brute_solver(Experiment):
         opt = SolverFactory('cbc')
 
         opt.options.update(options["SOLVER_PARAMETERS"])
-        result = opt.solve(model_instance, tee=True)
+        result = opt.solve(model_instance, tee=debug)
 
         self.status = get_status(result)
         self.model_solution = model_instance
@@ -311,7 +314,7 @@ class Brute_solver(Experiment):
 
         for j in instance.sJobs:
             for s in instance.sSlots:
-                if value(instance.v01Start[j,s]) == 1:
+                if value(instance.v01Start[j, s]) == 1:
                     dict_start[j] = int(s)
 
         dict_mode = var_to_dict(instance.v01JobMode)

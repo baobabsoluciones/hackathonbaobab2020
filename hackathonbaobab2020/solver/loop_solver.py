@@ -4,6 +4,7 @@ from pyomo.environ import *
 from pyomo.environ import SolverFactory
 import pytups as pt
 import logging as log
+import time
 
 start_time = time.time()
 
@@ -104,7 +105,7 @@ def get_assign_tasks_model():
     model.v01JobDone = Var(model.sJobs, model.sSlots, model.sModes, domain=Binary)
     model.v01JobMode = Var(model.sJobs, model.sModes, domain=Binary)
     model.vMaxSlot = Var(domain=NonNegativeReals)
-    model.vHNonRenewable = Var(model.sResources, within=NonNegativeReals, bounds=(0,100))
+    model.vHNonRenewable = Var(model.sResources, within=NonNegativeReals, bounds=(0, 100))
 
     # Model constraint definition
     # c1: the start time of a task should be earlier than the end time
@@ -326,7 +327,7 @@ class Loop_solver(Experiment):
                 end_solve = time.time()
 
                 log.debug("Jobs solved: ", loop_jobs, ", nº Slots:", int(value(model_instance.vMaxSlot)), ", time (s):",
-                      result.solver.system_time)
+                          result.solver.system_time)
                 previous_instance = model_instance
                 aux_periods = 0
 
@@ -335,8 +336,8 @@ class Loop_solver(Experiment):
                 # Get the data
                 data, max_duration_new_job, mode_max_duration = self.get_input_data(jobsToSolve=loop_jobs,
                                                                                     previusSlots=
-                                                                                        aux_periods +
-                                                                                        value(previous_instance.vMaxSlot))
+                                                                                    aux_periods +
+                                                                                    value(previous_instance.vMaxSlot))
                 if loop_jobs == listJobs[-1]:
                     model_instance = model.create_instance(data)
                     options["SOLVER_PARAMETERS"] = {"ratio": 0.01}
@@ -377,8 +378,7 @@ class Loop_solver(Experiment):
                                    warmstart_file="./cbc_warmstart.soln")
 
                 log.debug("Jobs solved: ", loop_jobs, ", nº Slots:", int(value(model_instance.vMaxSlot)), ", time (s):",
-                      result.solver.system_time)
-
+                          result.solver.system_time)
 
                 previous_instance = model_instance
 
@@ -389,16 +389,16 @@ class Loop_solver(Experiment):
                             model_instance.pNeeds[iJob, iMode, iResource])
                            for iJob in model_instance.sJobs for iMode in model_instance.sModes
                            if (iJob, iMode, iResource) in model_instance.pNeeds) / value(
-                        model_instance.pAvailability[iResource]) > 0.9 and "N" in iResource :
+                        model_instance.pAvailability[iResource]) > 0.9 and "N" in iResource:
                         aux_periods = round(value(previous_instance.vMaxSlot) / loop_jobs) * 2
 
                     log.debug("used", iResource,
-                          sum(value(model_instance.v01JobMode[iJob, iMode]) * value(
-                              model_instance.pNeeds[iJob, iMode, iResource])
-                              for iJob in model_instance.sJobs for iMode in model_instance.sModes
-                              if (iJob, iMode, iResource) in model_instance.pNeeds),
-                          "total:", value(model_instance.pAvailability[iResource])
-                          )
+                              sum(value(model_instance.v01JobMode[iJob, iMode]) * value(
+                                  model_instance.pNeeds[iJob, iMode, iResource])
+                                  for iJob in model_instance.sJobs for iMode in model_instance.sModes
+                                  if (iJob, iMode, iResource) in model_instance.pNeeds),
+                              "total:", value(model_instance.pAvailability[iResource])
+                              )
 
         self.status = get_status(result)
         self.model_solution = model_instance
