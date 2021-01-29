@@ -230,11 +230,18 @@ def get_feasible_modes():
     model.v01JobMode = Var(model.sJobs, model.sModes, domain=Binary)
     model.vMaxSlot = Var(domain=NonNegativeReals)
 
+    # c2: the renewable resources used during each period should be inferior to the resource availability
+    def c2_renewable_resources(model, iJob, iResource):
+        if model.pResourceType[iResource] == 1:
+            return sum(model.v01JobMode[iJob, iMode] * model.pNeeds[iJob, iMode, iResource]
+                       for iMode in model.sModes if (iJob, iMode, iResource) in model.pNeeds) <= \
+                   model.pAvailability[iResource]
+        return Constraint.Skip
+
     # Model constraint definition
     # c3: the total non renewable resources used should be inferior to the resource availability
     def c3_non_renewable_resources(model, iResource):
         if model.pResourceType[iResource] == 2:
-            # return sum(model.v01JobDone[iJob, iSlot, iMode] * model.pNeeds[iJob, iMode, iResource]
             return sum(model.v01JobMode[iJob, iMode] * model.pNeeds[iJob, iMode, iResource]
                        for iJob in model.sJobs for iMode in model.sModes if (iJob, iMode, iResource) in model.pNeeds) <= \
                    model.pAvailability[iResource]
@@ -536,7 +543,10 @@ class Fix_loop_solver(Experiment):
         if "SOLVER_PARAMETERS" not in options:
             options["SOLVER_PARAMETERS"] = {}
         if "timeLimit" in options:
-            options["SOLVER_PARAMETERS"]["sec"] = options["timeLimit"]
+            if "SOLVER_PARAMETERS" in options:
+                options["SOLVER_PARAMETERS"]["sec"] = options["timeLimit"]
+            else:
+                options["SOLVER_PARAMETERS"] = {"sec": options["timeLimit"]}
         else:
             options["timeLimit"] = SOLVER_PARAMETERS["sec"]
         log.debug("Max time(s): ", options["timeLimit"])
@@ -551,6 +561,13 @@ class Fix_loop_solver(Experiment):
         opt = SolverFactory('cbc')
         opt.options.update(options["SOLVER_PARAMETERS"])
         result = opt.solve(model_modes_instance, tee=debug)
+
+        self.status = get_status(result)
+        self.model_solution = model_modes_instance
+
+        if not is_feasible(self.status):
+            self.solution = Solution({})
+            return get_status_value(self.status)
 
         for iResource in model_modes_instance.sResources:
             log.debug("used", iResource,
@@ -588,6 +605,13 @@ class Fix_loop_solver(Experiment):
                 opt.options.update(options["SOLVER_PARAMETERS"])
                 result = opt.solve(model_instance)
                 end_solve = time.time()
+
+                self.status = get_status(result)
+                self.model_solution = model_instance
+
+                if not is_feasible(self.status):
+                    self.solution = Solution({})
+                    return get_status_value(self.status)
 
                 log.debug("Jobs solved: ", loop_jobs, ", nº Slots:", int(value(model_instance.vMaxSlot)), ", time (s):",
                           result.solver.system_time)
@@ -635,9 +659,15 @@ class Fix_loop_solver(Experiment):
                 # WarmStart
                 write_cbc_warmstart_file("./cbc_warmstart.soln", model_instance, opt)
 
-                log.debug("Time between solves", time.time() - end_solve)
-                result = opt.solve(model_instance, warmstart=True,
+                result = opt.solve(model_instance, tee=debug,warmstart=True,
                                    warmstart_file="./cbc_warmstart.soln")
+
+                self.status = get_status(result)
+                self.model_solution = model_instance
+
+                if not is_feasible(self.status):
+                    self.solution = Solution({})
+                    return get_status_value(self.status)
 
                 log.debug("Jobs solved: ", loop_jobs, ", nº Slots:", int(value(model_instance.vMaxSlot)), ", time (s):",
                           result.solver.system_time)
