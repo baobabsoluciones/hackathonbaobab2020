@@ -8,7 +8,7 @@ SOLVER_STATUS = {4: "optimal", 2: "maxTimeLimit", 3: "infeasible", 0: "unknown"}
 
 SOLVER_PARAMETERS = {
     # maximum resolution time of each iteration.
-    "sec": 600,
+    "sec": 2200,
     # accepted absolute gap
     "allow": 1,
     # accepted relative gap (0.01 = 1%)
@@ -73,7 +73,7 @@ def get_assign_tasks_model():
     model.sSlots = Set()
 
     # Model parameters definition
-    model.pNumberSlots = Param(mutable=True)  # TODO comprobar si hace falta
+    model.pNumberSlots = Param(mutable=True)
     model.pDuration = Param(model.sJobs, model.sModes, mutable=True)
     model.pNeeds = Param(model.sJobs, model.sModes, model.sResources, mutable=True)
     model.pAvailability = Param(model.sResources, mutable=True)
@@ -86,7 +86,7 @@ def get_assign_tasks_model():
     model.v01End = Var(model.sJobs, model.sSlots, domain=Binary)
     model.v01JobDone = Var(model.sJobs, model.sSlots, model.sModes, domain=Binary)
     model.v01JobMode = Var(model.sJobs, model.sModes, domain=Binary)
-    model.vMaxSlot = Var(domain=NonNegativeIntegers)
+    model.vMaxSlot = Var(domain=NonNegativeReals)
 
     # Model constraint definition
     # c1: the start time of a task should be earlier than the end time
@@ -95,26 +95,28 @@ def get_assign_tasks_model():
                >= sum(model.v01Start[iJob, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots)
 
     # c2: the renewable resources used during each period should be inferior to the resource availability
-    def c2_renewable_resources(model, iSlot, iResource, iMode):
+    def c2_renewable_resources(model, iSlot, iResource):
         if model.pResourceType[iResource] == 1:
             return sum(model.v01JobDone[iJob, iSlot, iMode] * model.pNeeds[iJob, iMode, iResource]
-                       for iJob in model.sJobs if (iJob, iMode, iResource) in model.pNeeds) <= model.pAvailability[iResource]
+                       for iJob in model.sJobs for iMode in model.sModes if (iJob, iMode, iResource) in model.pNeeds) <= \
+                   model.pAvailability[
+                       iResource]
         return Constraint.Skip
 
     # c3: the total non renewable resources used should be inferior to the resource availability
-    def c3_non_renewable_resources(model, iResource, iMode):
+    def c3_non_renewable_resources(model, iResource):
         if model.pResourceType[iResource] == 2:
             # return sum(model.v01JobDone[iJob, iSlot, iMode] * model.pNeeds[iJob, iMode, iResource]
             return sum(model.v01JobMode[iJob, iMode] * model.pNeeds[iJob, iMode, iResource]
-                       for iJob in model.sJobs if (iJob, iMode, iResource) in model.pNeeds) <= model.pAvailability[iResource]
+                       for iJob in model.sJobs for iMode in model.sModes if (iJob, iMode, iResource) in model.pNeeds) <= \
+                   model.pAvailability[iResource] #+ model.vHNonRenewable[iResource]
         return Constraint.Skip
 
     # c4: precedence between tasks should be respected
     def c4_precedence(model, iJob, iJob2):
-        if iJob != iJob2:
+        if iJob != iJob2 and model.p01Successor[iJob, iJob2] == 1:
             return sum(model.v01Start[iJob2, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots) \
-                   >= (sum(model.v01End[iJob, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots) + 1) \
-                   * model.p01Successor[iJob, iJob2]
+                   >= (sum(model.v01End[iJob, iSlot] * model.pSlot[iSlot] for iSlot in model.sSlots) + 1)
         return Constraint.Skip
 
     # c5: the number of slots in which the job is done should be equal to the job duration
@@ -133,13 +135,13 @@ def get_assign_tasks_model():
 
     # c7: if a job ends in slot S, then the job is done in slot S but it is not done in slot S+1
     def c7_end_continuity(model, iJob, iSlot, iMode):
-        if model.pSlot[iSlot] != model.pNumberSlots:  # TODO ver si funciona con ord(iSlot)
+        if model.pSlot[iSlot] != model.pNumberSlots:
             return model.v01JobDone[iJob, iSlot, iMode] \
                    <= model.v01JobDone[iJob, iSlot + 1, iMode] + model.v01End[iJob, iSlot]
         return Constraint.Skip
 
     # c8: if a job starts in slot S+1, then the job is done in slot S+1 but it is not done in slot S
-    def c8_start_continuity(model, iJob, iSlot, iMode):  # TODO ver si funciona con ord(iSlot), sino pSlot[iSlot]
+    def c8_start_continuity(model, iJob, iSlot, iMode):
         if model.pSlot[iSlot] != model.pNumberSlots:
             return model.v01JobDone[iJob, iSlot + 1, iMode] \
                    <= model.v01JobDone[iJob, iSlot, iMode] + model.v01Start[iJob, iSlot + 1]
@@ -167,8 +169,8 @@ def get_assign_tasks_model():
 
     # Activate constraints
     model.c1_start_before_end = Constraint(model.sJobs, rule=c1_start_before_end)
-    model.c2_renewable_resources = Constraint(model.sSlots, model.sResources, model.sModes, rule=c2_renewable_resources)
-    model.c3_non_renewable_resources = Constraint(model.sResources, model.sModes, rule=c3_non_renewable_resources)
+    model.c2_renewable_resources = Constraint(model.sSlots, model.sResources, rule=c2_renewable_resources)
+    model.c3_non_renewable_resources = Constraint(model.sResources, rule=c3_non_renewable_resources)
     model.c4_precedence = Constraint(model.sJobs, model.sJobs, rule=c4_precedence)
     model.c5_duration = Constraint(model.sJobs, model.sModes, rule=c5_duration)
     model.c6_duration2 = Constraint(model.sJobs, rule=c6_duration2)
@@ -184,7 +186,8 @@ def get_assign_tasks_model():
     def obj_expression(model):
         return model.vMaxSlot
 
-    # Activate objective function
+        # Activate objective function
+
     model.f_obj = Objective(rule=obj_expression, sense=minimize)
 
     return model
@@ -269,11 +272,13 @@ class Brute_solver(Experiment):
 
         # parameters of the resolution.
 
+        if "SOLVER_PARAMETERS" not in options:
+            options["SOLVER_PARAMETERS"] = {}
         if "timeLimit" in options:
-            if "SOLVER_PARAMETERS" in options:
-                options["SOLVER_PARAMETERS"]["sec"] = options["timeLimit"]
-            else:
-                options["SOLVER_PARAMETERS"] = {"sec": options["timeLimit"]}
+            options["SOLVER_PARAMETERS"]["sec"] = options["timeLimit"]
+        else:
+            options["timeLimit"] = SOLVER_PARAMETERS["sec"]
+        log.debug("Max time(s): ", options["timeLimit"])
 
         model_instance = model.create_instance(data, report_timing=True)
         opt = SolverFactory('cbc')
@@ -283,7 +288,6 @@ class Brute_solver(Experiment):
 
         self.status = get_status(result)
         self.model_solution = model_instance
-        print(self.status)
 
         if is_feasible(self.status):
             if print_file:
