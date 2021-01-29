@@ -30,9 +30,10 @@ solvers_to_pattern = dict(default='algorithm1.py', ortools='cp_ortools.py',
                           loop_EJ='loop_solver.py',
                           Iterator_HL='milp_LP_HL/*.py')
 
-# # TODO: take this out
+# optional filtering:
 # scenarios = ['c15.mm.zip']
 # solvers = ['default', 'ortools']
+
 
 def solve_all():
 
@@ -59,7 +60,6 @@ def solve_all():
 
 def compare():
     table = pd.concat([get_table('{}/{}'.format(root_dir, solver)) for solver in solvers])
-    table = table.merge(length_code_table())
     table.to_csv('{}/{}'.format(root_dir, 'summary.csv'), index=False)
     print(table.to_markdown())
     return table
@@ -90,12 +90,12 @@ def graphs(table):
         aggregate('mean')
     sns.set_theme(style="ticks", color_codes=True)
     sns.catplot(x="solver", y="time", data=data.reset_index())
-    plt.savefig('benchmark/time.png')
+    plt.savefig(root_dir + '/time.png')
     data.unstack('solver').round(2)
 
     data = table.groupby('solver')['lines'].aggregate('mean').reset_index()
     g = sns.barplot(x="solver", y="lines", data=data)
-    plt.savefig('benchmark/length.png')
+    plt.savefig(root_dir + '/length.png')
 
 
     # errors
@@ -107,7 +107,7 @@ def graphs(table):
     g = sns.catplot(x="solver", y="errors", data=data)
     # g.fig.get_axes()[0].set_yscale('log')
     # g.set_yscale("log")
-    plt.savefig('benchmark/errors.png')
+    plt.savefig(root_dir + '/errors.png')
 
     # status
     g = table.\
@@ -115,14 +115,14 @@ def graphs(table):
         aggregate('count').unstack('solver').\
         T.plot(kind='bar', stacked=True)
     g.set_xticklabels(g.get_xticklabels(), rotation=0)
-    plt.savefig('benchmark/status.png')
+    plt.savefig(root_dir + '/status.png')
 
     # relative optimality gap
     optimal = table[table.solver=='ortools'][['name', 'objective']]
     data = table.merge(optimal, on='name')
     data['gap'] = (data.objective_x - data.objective_y)/data.objective_y*100
     g = sns.catplot(x="solver", y="gap", data=data)
-    plt.savefig('benchmark/gap.png')
+    plt.savefig(root_dir + '/gap.png')
 
 
 
@@ -130,10 +130,4 @@ if __name__ == '__main__':
     # solve_all()
     # length_code_table()
     table = compare()
-    graphs(table)
-
-
-    print(a)
-    print(table)
-
-    pass
+    # graphs(table)

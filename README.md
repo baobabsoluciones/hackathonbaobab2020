@@ -12,7 +12,7 @@ On the `data` directory of this repository we have copied the smallest instances
 For the format of the solution, since there is no example that we know of, we'll be using the one in `data/solutions/c15mm/c1564_9.output.json`
 
 Below are the instructions to use the helper functions and checker (they are optional).
-To understand the format of the input data file, you can check how we parse it in python in the function `Instance.from_mm(path)` in the file`core/instance.py`
+To understand the format of the input data file, you can check how we parse it in python in the function `Instance.from_mm(path)` in the file`hackathonbaobab2020/core/instance.py`
 
 ## Installation
 
@@ -29,16 +29,16 @@ pip install -r requirements.txt
 
 These are the steps to add a solver and make it compatible with the command line and the python functions:
 
-1. Add a file inside the `solvers` directory with a subclass of `core.experiment.Experiment` that implements, at least, the `solve()` method *with the same argument names*.
+1. Add a file inside the `hackathonbaobab2020/solver` directory with a subclass of `hackathonbaobab2020.core.experiment.Experiment` that implements, at least, the `solve()` method *with the same argument names*.
 1. Your `solve` method needs to return an integer with the status of the solving process. Current values are `{4: "Optimal", 2: "Feasible", 3: "Infeasible", 0: "Unknown"}`.
 1. Your `solve` method also needs to store the best solution found in `self.solution`. It needs to be an instance of the `Solution` object.
-1. Edit the `solvers/__init__.py` to import your solver and edit the `solvers` dictionary by giving your solver a name.
+1. Edit the `hackathonbaobab2020/solver/__init__.py` to import your solver and edit the `solvers` dictionary by giving your solver a name.
 1. If the `requirements.txt` file is missing some package you need for your solver, add it at the bottom of the list.
 
 **Additional considerations**:
 
 1. One way to see if the solver is correctly integrated is to test solving with it via the command line (see below).
-2. Everything that your solver needs should be inside the `solvers` directory (you can put more than one file). Do not edit the files outside the `solvers` directories with code from your solver!
+2. Everything that your solver needs should be inside the `hackathonbaobab2020/solver` directory (you can put more than one file). Do not edit the files outside the `solver` directories with code from your solver!
 
 ## How to run tests
 
@@ -55,19 +55,19 @@ The command line app has three main ways to use it.
 
 To get all possible commands just run:
 
-    python main.py solve-scenarios --help
+    python hackathonbaobab2020/main.py solve-scenarios --help
 
-The following assumes you have downloaded the zip `j30.mm.zip` of input instances, and you have stored it in the `data` directory. It solves instance `j301_1.mm` with the solver that is in `solvers/algorithm1` named `default` in `solvers/__init__.py`.
+The following assumes you have downloaded the zip `j30.mm.zip` of input instances, and you have stored it in the `data` directory. It solves instance `j301_1.mm` with the solver that is in `hackathonbaobab2020/solver/algorithm1` named `default` in `hackathonbaobab2020/solver/__init__.py`.
     
-    python main.py solve-scenarios --directory=data --scenario=j30.mm.zip --solver=default --instance=j3010_1.mm --no-test
+    python hackathonbaobab2020/main.py solve-scenarios --directory=data --scenario=j30.mm.zip --solver=default --instance=j3010_1.mm --no-test
 
 You can also solve multiple scenarios or multiple instances by passing the `--instances` and `--scenarios` arguments. Just be careful with the string format:
 
-    python main.py solve-scenarios --directory=data --scenarios='["c15.mm.zip", "c21.mm.zip", "j10.mm.zip", "j30.mm.zip", "m1.mm.zip", "m5.mm.zip", "n0.mm.zip", "n1.mm.zip", "n3.mm.zip", "r1.mm.zip", "r4.mm.zip", "r5.mm.zip"]' --solver=default
+    python hackathonbaobab2020/main.py solve-scenarios --directory=data --scenarios='["c15.mm.zip", "c21.mm.zip", "j10.mm.zip", "j30.mm.zip", "m1.mm.zip", "m5.mm.zip", "n0.mm.zip", "n1.mm.zip", "n3.mm.zip", "r1.mm.zip", "r4.mm.zip", "r5.mm.zip"]' --solver=default
 
 With the option argument, a json with the solving configuration is passed:
 
-    python main.py solve-scenarios --directory=data --scenario=j30.mm.zip --solver=default --instance=j3010_1.mm --no-test --options='{"DEBUG": 1, "timeLimit": 120}'
+    python hackathonbaobab2020/main.py solve-scenarios --directory=data --scenario=j30.mm.zip --solver=default --instance=j3010_1.mm --no-test --options='{"DEBUG": 1, "timeLimit": 120}'
 
 Finally, if you pass the `zip` option you create a nice little zip at the end.
 
@@ -83,7 +83,7 @@ You first need to have a zip with the results you want to get statistics from. F
 
 Then you do something like:
 
-    python main.py export-table --path=data/default.zip --path_out=data_default.csv
+    python hackathonbaobab2020/main.py export-table --path=data/default.zip --path_out=data_default.csv
 
 This generates a table in a csv with several columns: scenario, name (instance), objective (function value), solver, (solving) time, (number of) errors (in the solution).
 
@@ -107,6 +107,13 @@ Which should print something like this:
 |  3 | n3.mm      | n343_4.mm |          37 | default  | 0.000268723 |        1 |
 |  4 | n1.mm      | n121_4.mm |          55 | default  | 0.000254337 |        0 |
 
+## Benchmarking solvers
+
+In `hackathonbaobab2020/execution/benchmark.py` there are functions to automate the comparison of solvers. Function `solve_all()` executes a set of random instances. They require previously downloading the corresponding zips from the dataset site. Function `compare` produce a summary table based on the results. Finally, `graphs` use the generated table to produce graphs of the results.
+
+Example of a resulting graph:
+
+![status graph](img/status.png)
 
 ## Using python objects
 
@@ -117,11 +124,11 @@ We use the following helper objects:
 3. `Experiment` to represent input data+solution.
 4. `Algorithm(Experiment)` to represent a resolution approach.
 
-An example of the last one (4) is found in `solvers/algorithm1.py`. It schedules one job at a time while respecting the sequence. It passes all tests except the non-renewables, sometimes.
+An example of the last one (4) is found in `hackathonbaobab2020/solver/algorithm1.py`. It schedules one job at a time while respecting the sequence. It passes all tests except the non-renewables, sometimes.
 
 There are helper functions to read and write an instance and a solution to/from a file.
 
-A small example of how to use the existing code is available in `execution/test_script.py`.
+A small example of how to use the existing code is available in `hackathonbaobab2020/execution/test_script.py`.
 Below an example:
 
 ```python
