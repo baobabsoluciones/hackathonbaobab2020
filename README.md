@@ -18,11 +18,29 @@ To understand the format of the input data file, you can check how we parse it i
 
 python>=3.5 is needed. I'm assuming a Windows installation.
 
+To install from source:
+
 ```
 cd hackathonbaobab2020
 python -m venv venv
 venv/Scripts/activate
 pip install -r requirements.txt
+```
+
+Alternatively, it's possible to install it as a pypi package.
+Here there is more control on which packages are installed.
+
+Install only the core dependencies (core, schemas, default solver)::
+
+```
+pip install hackathonbaobab2020
+```
+
+Install all dependencies ('benchmark' to generate graphs, 'solvers' to install solver dependencies). The second line installs (in Ubuntu) the cbc solver::
+
+```
+pip install hackathonbaobab2020[benchmark,solvers]
+sudo apt install coinor-cbc
 ```
 
 ## How to add a new solver
@@ -33,7 +51,7 @@ These are the steps to add a solver and make it compatible with the command line
 1. Your `solve` method needs to return an integer with the status of the solving process. Current values are `{4: "Optimal", 2: "Feasible", 3: "Infeasible", 0: "Unknown"}`.
 1. Your `solve` method also needs to store the best solution found in `self.solution`. It needs to be an instance of the `Solution` object.
 1. Edit the `hackathonbaobab2020/solver/__init__.py` to import your solver and edit the `solvers` dictionary by giving your solver a name.
-1. If the `requirements.txt` file is missing some package you need for your solver, add it at the bottom of the list.
+1. If the `requirements.txt` file is missing some package you need for your solver, add it to the list under `solvers`. Also edit the `setup.py` and add the dependency on `solvers` within the `extras_require` dictionary.
 
 **Additional considerations**:
 
@@ -67,7 +85,7 @@ You can also solve multiple scenarios or multiple instances by passing the `--in
 
 With the option argument, a json with the solving configuration is passed:
 
-    python hackathonbaobab2020/main.py solve-scenarios --directory=data --scenario=j30.mm.zip --solver=default --instance=j3010_1.mm --no-test --options='{"DEBUG": 1, "timeLimit": 120}'
+    python hackathonbaobab2020/main.py solve-scenarios --directory=data --scenario=j30.mm.zip --solver=brute_EJ --instance=j3010_1.mm --no-test --options='{"DEBUG": 1, "timeLimit": 120}'
 
 Finally, if you pass the `zip` option you create a nice little zip at the end.
 

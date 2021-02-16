@@ -3,6 +3,7 @@ from hackathonbaobab2020.core import Experiment, Solution
 from pyomo.environ import *
 from pyomo.environ import SolverFactory
 import pytups as pt
+import logging as log
 
 SOLVER_STATUS = {4: "optimal", 2: "maxTimeLimit", 3: "infeasible", 0: "unknown"}
 
@@ -281,7 +282,7 @@ class Brute_solver(Experiment):
             options["SOLVER_PARAMETERS"]["sec"] = options["timeLimit"]
         else:
             options["timeLimit"] = SOLVER_PARAMETERS["sec"]
-        log.debug("Max time(s): ", options["timeLimit"])
+        log.debug("Max time(s): {}".format(options["timeLimit"]))
 
         model_instance = model.create_instance(data, report_timing=True)
         opt = SolverFactory('cbc')

@@ -1,6 +1,7 @@
 import pytups as pt
 import re
 import json
+from ..schemas import check_instance
 
 
 class Instance(object):
@@ -79,6 +80,8 @@ class Instance(object):
 
     @classmethod
     def from_dict(cls, data_json):
+        check_instance(data_json)
+
         jobs = pt.SuperDict({v['id']: v for v in data_json['jobs']})
         res = pt.SuperDict({v['id']: v for v in data_json['resources']})
         needs = pt.SuperDict({(v['job'], v['mode'], v['resource']): v['need'] for v in data_json['needs']})

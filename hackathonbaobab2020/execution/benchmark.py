@@ -8,7 +8,6 @@ from pygount import SourceAnalysis, ProjectSummary
 from glob import glob
 import seaborn as sns
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
 
 
 def sample_instances(scenario_file, n=5):

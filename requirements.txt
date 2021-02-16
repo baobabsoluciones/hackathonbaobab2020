@@ -1,10 +1,15 @@
 pytups
 click
-ortools
-plotly
 pandas
 orloge
-tabulate
+jsonschema
+
+# solvers:
 pyomo
+ortools
+
+# benchmark:
+tabulate
 pygount
+plotly
 seaborn

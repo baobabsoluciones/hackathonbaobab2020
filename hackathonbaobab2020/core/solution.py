@@ -1,6 +1,7 @@
 import pytups as pt
 import json
 from .tools import dict_to_list
+from ..schemas import check_solution
 
 
 class Solution(object):
@@ -13,6 +14,7 @@ class Solution(object):
 
     @classmethod
     def from_dict(cls, data_json):
+        check_solution(data_json)
         data = pt.SuperDict({v['job']:
                                  pt.SuperDict(period=v['period'],
                                               mode=v['mode']) for v in data_json}

@@ -305,7 +305,7 @@ class Loop_solver(Experiment):
             options["SOLVER_PARAMETERS"]["sec"] = options["timeLimit"]
         else:
             options["timeLimit"] = SOLVER_PARAMETERS["sec"]
-        log.debug("Max time(s): ", options["timeLimit"])
+        log.debug("Max time(s): ".format(options["timeLimit"]))
 
         model = get_assign_tasks_model()
 
@@ -326,8 +326,11 @@ class Loop_solver(Experiment):
                 result = opt.solve(model_instance, tee=debug)
                 end_solve = time.time()
 
-                log.debug("Jobs solved: ", loop_jobs, ", nº Slots:", int(value(model_instance.vMaxSlot)), ", time (s):",
-                          result.solver.system_time)
+                log.debug("Jobs solved: {}, num Slots: {}, time (s): {}, ".
+                          format(loop_jobs,
+                                 int(value(model_instance.vMaxSlot)),
+                                 result.solver.system_time))
+
                 previous_instance = model_instance
                 aux_periods = 0
 
@@ -377,8 +380,10 @@ class Loop_solver(Experiment):
                 result = opt.solve(model_instance, tee=debug, warmstart=True,
                                    warmstart_file="./cbc_warmstart.soln")
 
-                log.debug("Jobs solved: ", loop_jobs, ", nº Slots:", int(value(model_instance.vMaxSlot)), ", time (s):",
-                          result.solver.system_time)
+                log.debug("Jobs solved: {}, num Slots: {}, time (s): {}, ".
+                          format(loop_jobs,
+                                 int(value(model_instance.vMaxSlot)),
+                                 result.solver.system_time))
 
                 previous_instance = model_instance
 
@@ -392,13 +397,13 @@ class Loop_solver(Experiment):
                         model_instance.pAvailability[iResource]) > 0.9 and "N" in iResource:
                         aux_periods = round(value(previous_instance.vMaxSlot) / loop_jobs) * 2
 
-                    log.debug("used", iResource,
-                              sum(value(model_instance.v01JobMode[iJob, iMode]) * value(
+                    log.debug("used: {} {}, total: {}".
+                              format(iResource, sum(value(model_instance.v01JobMode[iJob, iMode]) * value(
                                   model_instance.pNeeds[iJob, iMode, iResource])
                                   for iJob in model_instance.sJobs for iMode in model_instance.sModes
                                   if (iJob, iMode, iResource) in model_instance.pNeeds),
-                              "total:", value(model_instance.pAvailability[iResource])
-                              )
+                              value(model_instance.pAvailability[iResource])
+                              ))
 
         self.status = get_status(result)
         self.model_solution = model_instance

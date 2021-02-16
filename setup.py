@@ -11,10 +11,12 @@ packages = ['hackathonbaobab2020',
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-required = []
-with open("requirements.txt", "r") as fh:
-    required.append(fh.read().splitlines())
+install_requires = ['pytups', 'click', 'pandas', 'orloge', 'jsonschema']
 
+extras_require = {
+    'benchmark': ['tabulate', 'pygount', 'plotly', 'seaborn'],
+    'solvers': ['pyomo' ,'ortools']
+    }
 
 kwargs = {
     "name": "hackathonbaobab2020",
@@ -27,7 +29,8 @@ kwargs = {
     "maintainer": "Franco Peschiera",
     "author_email": "pchtsp@gmail.com",
     "maintainer_email": "pchtsp@gmail.com",
-    "install_requires": required,
+    "install_requires": install_requires,
+    "extras_require": extras_require,
     "url": "https://github.com/baobabsoluciones/hackathonbaobab2020",
     "download_url": "https://github.com/baobabsoluciones/hackathonbaobab2020/archive/main.zip",
     "keywords": "math hackathon pulp ortools pyomo",

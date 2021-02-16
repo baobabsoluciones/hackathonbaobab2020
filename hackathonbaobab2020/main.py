@@ -12,6 +12,7 @@ class PythonLiteralOption(click.Option):
         except:
             raise click.BadParameter(value)
 
+
 class PythonJsonOption(click.Option):
 
     def type_cast_value(self, ctx, value):
@@ -21,10 +22,10 @@ class PythonJsonOption(click.Option):
             raise click.BadParameter(value)
 
 
-
 @click.group()
 def cli():
     pass
+
 
 @cli.command()
 @click.option('--directory', default='.', help='data where the input data zip files are.')
@@ -48,6 +49,7 @@ def solve_scenarios(directory, scenarios, scenario, solver, test, instances, ins
         scenarios = [scenario]
     rb.solve_scenarios_and_zip(scenarios, os.path.join(directory, solver),
                                solver, test=test, instances=instances, zip=zip, options=options)
+
 
 @cli.command()
 @click.option('--path', default='default', help='the path to the zipfile to analyse.')
