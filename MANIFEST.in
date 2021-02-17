@@ -2,9 +2,4 @@ include LICENSE
 include MANIFEST.in
 include README.md
 include setup.py
-include data/*.py
-include tests/*.py
-include hackathonbaobab2020/*.py
-include hackathonbaobab2020/core/*.py
-include hackathonbaobab2020/execution/*.py
-include hackathonbaobab2020/solvers/*.py
+include hackathonbaobab2020/schemas/*

@@ -3,10 +3,7 @@
 from setuptools import setup
 
 packages = ['hackathonbaobab2020',
-            'hackathonbaobab2020.core',
-            'hackathonbaobab2020.solver',
-            'hackathonbaobab2020.execution',
-            'hackathonbaobab2020.solver.milp_LP_HL']
+            ]
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -20,7 +17,7 @@ extras_require = {
 
 kwargs = {
     "name": "hackathonbaobab2020",
-    "version": 0.95,
+    "version": 0.96,
     "packages": packages,
     "description": "Hackathon 2020 at baobab soluciones",
     "long_description": long_description,
@@ -34,6 +31,7 @@ kwargs = {
     "url": "https://github.com/baobabsoluciones/hackathonbaobab2020",
     "download_url": "https://github.com/baobabsoluciones/hackathonbaobab2020/archive/main.zip",
     "keywords": "math hackathon pulp ortools pyomo",
+    "include_package_data": True,
     "classifiers": [
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
