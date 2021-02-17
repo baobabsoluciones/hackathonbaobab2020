@@ -3,6 +3,11 @@
 from setuptools import setup
 
 packages = ['hackathonbaobab2020',
+            'hackathonbaobab2020.core',
+            'hackathonbaobab2020.solver',
+            'hackathonbaobab2020.execution',
+            'hackathonbaobab2020.solver.milp_LP_HL',
+            'hackathonbaobab2020.schemas',
             ]
 
 with open("README.md", "r") as fh:
