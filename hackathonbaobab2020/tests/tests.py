@@ -1,10 +1,7 @@
-import sys, os
-prev_dir = os.path.join(sys.path[0], '../../..')
-sys.path.insert(1, prev_dir)
 import unittest
-import hackathonbaobab2020.execution.run_batch as run
-from hackathonbaobab2020 import core as exp, solver as pkg_solvers
 import shutil
+from hackathonbaobab2020 import solve_zip, Experiment
+from hackathonbaobab2020 import solver as pkg_solvers
 
 
 class TestLoaderWithKwargs(unittest.TestLoader):
@@ -42,7 +39,7 @@ class HackathonTests(unittest.TestCase):
 
     def run_scenario_instance(self, scenario, instance):
         try:
-            run.solve_zip(
+            solve_zip(
                 zip_name='./{}.zip'.format(scenario),
                 path_out=self.path_out,
                 path_in='tests/',
@@ -52,7 +49,7 @@ class HackathonTests(unittest.TestCase):
                 options=dict(timeLimit=300, gapRel=1)
             )
 
-            experiment = exp.Experiment.from_json(self.path_out + scenario + '/' + instance)
+            experiment = Experiment.from_json(self.path_out + scenario + '/' + instance)
             return experiment.check_solution()
         except Exception as e:
             raise TestFail("Test failed for solver {}: {}".format(
