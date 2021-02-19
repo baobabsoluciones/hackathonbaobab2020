@@ -1,3 +1,7 @@
+import sys, os
+prev_dir = os.path.join(os.path.dirname(__file__), "..", "..")
+print(prev_dir)
+sys.path.insert(1, prev_dir)
 import unittest
 import shutil
 from hackathonbaobab2020 import solve_zip, Experiment
@@ -38,11 +42,12 @@ class HackathonTests(unittest.TestCase):
         shutil.rmtree(self.path_out)
 
     def run_scenario_instance(self, scenario, instance):
+        path_in = os.path.dirname(__file__)
         try:
             solve_zip(
                 zip_name='./{}.zip'.format(scenario),
                 path_out=self.path_out,
-                path_in='tests/',
+                path_in=path_in,
                 solver_name=self.solver,
                 test=False,
                 instances=[instance],
