@@ -17,7 +17,7 @@ class Solution(object):
         check_solution(data_json)
         data = pt.SuperDict({v['job']:
                                  pt.SuperDict(period=v['period'],
-                                              mode=v['mode']) for v in data_json}
+                                              mode=v['mode']) for v in data_json['assignment']}
                             )
         return cls(data)
 
@@ -27,8 +27,11 @@ class Solution(object):
             data_json = json.load(f)
         return cls.from_dict(data_json)
 
+    def to_dict(self):
+        return dict(assignment=dict_to_list(self.data, 'job'))
+
     def to_json(self, path):
-        data_json = dict_to_list(self.data, 'job')
+        data_json = self.to_dict()
         with open(path, 'w') as f:
             json.dump(data_json, f, indent=4, sort_keys=True)
         return

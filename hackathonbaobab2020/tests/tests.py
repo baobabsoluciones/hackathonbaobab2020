@@ -1,5 +1,5 @@
 import sys, os
-prev_dir = os.path.join(sys.path[0], '..')
+prev_dir = os.path.join(sys.path[0], '../../..')
 sys.path.insert(1, prev_dir)
 import unittest
 import hackathonbaobab2020.execution.run_batch as run

@@ -8,6 +8,7 @@ packages = ['hackathonbaobab2020',
             'hackathonbaobab2020.execution',
             'hackathonbaobab2020.solver.milp_LP_HL',
             'hackathonbaobab2020.schemas',
+            'hackathonbaobab2020.tests',
             ]
 
 with open("README.md", "r") as fh:
