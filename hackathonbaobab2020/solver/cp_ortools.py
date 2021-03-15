@@ -12,10 +12,10 @@ class CPModel1(Experiment):
     def solve(self, options):
         model = cp_model.CpModel()
         input_data = pt.SuperDict.from_dict(self.instance.data)
-        max_dur_job = input_data['durations'].vapply(lambda v: max(v.values()))
-        horizon = sum(max_dur_job) + 1
-        jobs_data = input_data['jobs']
         durations_data = pt.SuperDict.from_dict(input_data['durations'])
+        max_dur_job = durations_data.vapply(lambda v: max(v.values()))
+        horizon = sum(max_dur_job.values()) + 1
+        jobs_data = input_data['jobs']
         needs_data = pt.SuperDict.from_dict(input_data['needs'])
         mode_dictionary_to_values = lambda v: v.to_tuplist().sorted(key=lambda x: x[0]).take(1)
 
@@ -24,8 +24,10 @@ class CPModel1(Experiment):
         ends = pt.SuperDict({job: model.NewIntVar(0, horizon, 'end_{}'.format(job)) for job in jobs_data})
         job_mode = pt.SuperDict({job: model.NewIntVar(0, len(modes) - 1, 'mode_{}'.format(job))
                                  for job, modes in durations_data.items()})
-        job_duration = pt.SuperDict({job: model.NewIntVar(min(modes.values()), max(modes.values()), 'duration_{}'.format(job))
-                                     for job, modes in durations_data.items()})
+        job_duration_min_max = {job: (min(modes.values()), max(modes.values()))
+                                for job, modes in durations_data.items()}
+        job_duration = pt.SuperDict({job: model.NewIntVar(*bounds, 'duration_{}'.format(job))
+                                     for job, bounds in job_duration_min_max.items()})
         interval = pt.SuperDict({job: model.NewIntervalVar(starts[job], job_duration[job], ends[job], 'interval_{}'.format(job))
                                  for job in jobs_data})
         mode_duration_perjob = durations_data.vapply(mode_dictionary_to_values)

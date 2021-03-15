@@ -64,6 +64,7 @@ class Instance(object):
         return cls(data)
     
     def to_dict(self):
+
         res = self.data['resources'].values_l()
         job = self.data['jobs'].values_l()
         duration =self.data['durations'].to_dictup().to_tuplist().\
@@ -84,8 +85,8 @@ class Instance(object):
 
         jobs = pt.SuperDict({v['id']: v for v in data_json['jobs']})
         res = pt.SuperDict({v['id']: v for v in data_json['resources']})
-        needs = pt.SuperDict({(v['job'], v['mode'], v['resource']): v['need'] for v in data_json['needs']})
-        durations = pt.SuperDict({(v['job'], v['mode']): v['duration'] for v in data_json['durations']})
+        needs = pt.SuperDict({(v['job'], v['mode'], v['resource']): round(v['need']) for v in data_json['needs']})
+        durations = pt.SuperDict({(v['job'], v['mode']): round(v['duration']) for v in data_json['durations']})
         data = pt.SuperDict(jobs=jobs, resources=res, needs=needs.to_dictdict(), durations=durations.to_dictdict())
         return cls(data)
 
@@ -100,5 +101,11 @@ class Instance(object):
         with open(path, 'w') as f:
             json.dump(data, f, indent=4, sort_keys=True)
 
+    @staticmethod
+    def is_resource_renewable(resource):
+        if 'type' in resource:
+            return resource['type'] == 'R'
+        return resource['id'][0] == 'R'
+
     def get_renewable_resources(self):
-        return self.data['resources'].kfilter(lambda k: k[0] == 'R').keys()
+        return self.data['resources'].vfilter(self.is_resource_renewable).keys()
