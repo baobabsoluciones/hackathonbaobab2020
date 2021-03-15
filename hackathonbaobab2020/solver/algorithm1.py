@@ -33,4 +33,4 @@ class Algorithm(Experiment):
                 solution[job] = dict(period=period, mode=mode)
                 period = period + durations[job][mode]
         self.solution = Solution(solution)
-        return self.solution
+        return 2

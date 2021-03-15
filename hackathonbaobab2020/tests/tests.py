@@ -53,7 +53,6 @@ class HackathonTests(unittest.TestCase):
                 instances=[instance],
                 options=dict(timeLimit=300, gapRel=1)
             )
-
             experiment = Experiment.from_json(self.path_out + scenario + '/' + instance)
             return experiment.check_solution()
         except Exception as e:
