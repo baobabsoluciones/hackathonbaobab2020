@@ -3,13 +3,6 @@ import json
 from jsonschema import Draft7Validator
 
 basedir = os.path.dirname(__file__)
-print()
-
-with open(os.path.join(basedir, 'instance.json'), 'r') as f:
-    instance = json.load(f)
-
-with open(os.path.join(basedir, 'solution.json'), 'r') as f:
-    solution = json.load(f)
 
 
 def check_schema(schema, data):
@@ -21,6 +14,17 @@ def check_schema(schema, data):
     return True
 
 
+def load_file(name):
+    with open(os.path.join(basedir, name), 'r') as f:
+        data = json.load(f)
+    return data
+
+
+instance = load_file('instance.json')
+solution = load_file('solution.json')
+config = load_file('config.json')
+
+
 def check_instance(data):
     return check_schema(instance, data)
 
@@ -28,3 +32,6 @@ def check_instance(data):
 def check_solution(data):
     return check_schema(solution, data)
 
+
+def check_config(data):
+    return check_schema(config, data)
