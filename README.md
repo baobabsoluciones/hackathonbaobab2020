@@ -1,8 +1,12 @@
 # hackathon baobab 2020
 
-The problem consists of scheduling all jobs by deciding when and in which mode the job is executed.
-There are two types of resources: renewable resources (R) are consumed *each period* and have an availability that is recovered each period of time; non-renewable resources (N) are consumed *once per job* and have an availability for the whole planning horizon.
+We want to schedule all jobs by deciding when and in which mode to execute each job. There are precedence relationships between pairs of jobs. There are two types of resources. Renewable resources (R) are consumed *each period* and have an availability that is recovered each period of time. Non-renewable resources (N) are consumed *once per job* and have an availability for the whole planning horizon.
 The objective is to reduce the finishing time (start time + duration) of the last job.
+
+As an example the following image shows the input data (left), and the optimal solution (center: gantt, resource usage: right) for the instance `c159_7.mm`:
+
+![status graph](img/c159_7.mm.png)
+
 
 The instances for the problem are found here:
 
