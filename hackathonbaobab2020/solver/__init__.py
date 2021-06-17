@@ -24,7 +24,7 @@ else:
              Iterator_HL=Iterator1,
              loop_EJ=Loop_solver,
              brute_EJ=Brute_solver,
-             fix_loop_EF_JS=Fix_loop_solver
+             # fix_loop_EF_JS=Fix_loop_solver
              )
 
 
