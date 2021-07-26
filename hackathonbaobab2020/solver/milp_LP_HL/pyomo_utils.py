@@ -67,7 +67,7 @@ def deactivate_constraint(act_constraint, indices=None):
         keys_to_activate = [key for key in act_constraint.keys()]
     else:
         keys_to_activate = set(act_constraint.keys()).intersection(set(indices))
-    
+
     for key in keys_to_activate:
         act_constraint[key].deactivate()
 
@@ -100,7 +100,7 @@ def free_variable(variable, indices=None):
         keys_to_free = [key for key in variable.keys()]
     else:
         keys_to_free = set(variable.keys()).intersection(set(indices))
-    
+
     for key in keys_to_free:
         variable[key].fixed = False
 
@@ -133,7 +133,7 @@ def fix_variable(variable, indices=None):
         keys_to_free = [key for key in variable.keys()]
     else:
         keys_to_free = set(variable.keys()).intersection(set(indices))
-    
+
     for key in keys_to_free:
         variable[key].fixed = True
 
@@ -169,7 +169,9 @@ def is_feasible(status):
     :param status: a status (string or pyomo object)
     :return: True if the status is optimal or maxTimeLimit
     """
-    return str(status) == str(TerminationCondition.optimal) or str(status) == str(TerminationCondition.maxTimeLimit)
+    return str(status) == str(TerminationCondition.optimal) or str(status) == str(
+        TerminationCondition.maxTimeLimit
+    )
 
 
 def exist(variable, indices=None):
@@ -219,7 +221,3 @@ def var_to_dict(variable):
     :return: a dict containing the indices and values of the variable.
     """
     return {key: value(variable[key]) for key in variable.keys()}
-
-
-
-

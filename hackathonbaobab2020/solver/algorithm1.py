@@ -4,18 +4,17 @@ import pytups as pt
 
 
 class Algorithm(Experiment):
-
     def __init__(self, instance, solution=None):
         super().__init__(instance, solution)
         return
 
     def solve(self, options):
         # takes into account successors
-        jobs = copy.deepcopy(self.instance.data['jobs'])
+        jobs = copy.deepcopy(self.instance.data["jobs"])
         all_jobs = set(jobs.keys())
         solution = pt.SuperDict()
-        succ = jobs.get_property('successors')
-        durations = self.instance.data['durations']
+        succ = jobs.get_property("successors")
+        durations = self.instance.data["durations"]
 
         # algorithm
         period = 0
