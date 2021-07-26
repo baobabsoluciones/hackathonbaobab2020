@@ -1,4 +1,5 @@
 import sys, os
+
 prev_dir = os.path.join(os.path.dirname(__file__), "..", "..")
 print(prev_dir)
 sys.path.insert(1, prev_dir)
@@ -10,17 +11,20 @@ from hackathonbaobab2020 import solver as pkg_solvers
 
 class TestLoaderWithKwargs(unittest.TestLoader):
     """A test loader which allows to parse keyword arguments to the
-       test case class."""
+    test case class."""
+
     def loadTestsFromTestCase(self, testCaseClass, **kwargs):
         """Return a suite of all tests cases contained in
-           testCaseClass."""
+        testCaseClass."""
         if issubclass(testCaseClass, unittest.suite.TestSuite):
-            raise TypeError("Test cases should not be derived from " +
-                            "TestSuite. Maybe you meant to derive from" +
-                            " TestCase?")
+            raise TypeError(
+                "Test cases should not be derived from "
+                + "TestSuite. Maybe you meant to derive from"
+                + " TestCase?"
+            )
         testCaseNames = self.getTestCaseNames(testCaseClass)
-        if not testCaseNames and hasattr(testCaseClass, 'runTest'):
-            testCaseNames = ['runTest']
+        if not testCaseNames and hasattr(testCaseClass, "runTest"):
+            testCaseNames = ["runTest"]
 
         # Modification here: parse keyword arguments to testCaseClass.
         test_cases = []
@@ -32,11 +36,10 @@ class TestLoaderWithKwargs(unittest.TestLoader):
 
 
 class HackathonTests(unittest.TestCase):
-
     def __init__(self, testName, solver, *args, **kwargs):
         unittest.TestCase.__init__(self, testName)
         self.solver = solver
-        self.path_out = 'data/' + self.solver + '/'
+        self.path_out = "data/" + self.solver + "/"
 
     def tearDown(self):
         shutil.rmtree(self.path_out)
@@ -45,32 +48,30 @@ class HackathonTests(unittest.TestCase):
         path_in = os.path.dirname(__file__)
         try:
             solve_zip(
-                zip_name='./{}.zip'.format(scenario),
+                zip_name="./{}.zip".format(scenario),
                 path_out=self.path_out,
                 path_in=path_in,
                 solver_name=self.solver,
                 test=False,
                 instances=[instance],
-                options=dict(timeLimit=300, gapRel=1)
+                options=dict(timeLimit=300, gapRel=1),
             )
-            experiment = Experiment.from_json(self.path_out + scenario + '/' + instance)
+            experiment = Experiment.from_json(self.path_out + scenario + "/" + instance)
             return experiment.check_solution()
         except Exception as e:
-            raise TestFail("Test failed for solver {}: {}".format(
-                self.solver, e
-            ))
+            raise TestFail("Test failed for solver {}: {}".format(self.solver, e))
 
     # def test_j10(self):
     #     return self.run_scenario_instance('j10.mm', 'j102_2.mm')
 
     def test_j10_2(self):
-        return self.run_scenario_instance('j10.mm', 'j102_4.mm')
+        return self.run_scenario_instance("j10.mm", "j102_4.mm")
 
     def test_j10_3(self):
-        return self.run_scenario_instance('j10.mm', 'j102_5.mm')
+        return self.run_scenario_instance("j10.mm", "j102_5.mm")
 
     def test_j10_4(self):
-        return self.run_scenario_instance('j10.mm', 'j102_6.mm')
+        return self.run_scenario_instance("j10.mm", "j102_6.mm")
 
     # def test_c15(self):
     #     return self.run_scenario_instance('c15.mm', 'c154_3.mm')
@@ -105,7 +106,7 @@ def suite():
 class TestFail(Exception):
     pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Tests
     testAll()
-

@@ -5,11 +5,17 @@ from hackathonbaobab2020.solver.milp_LP_HL.function_utils import no_duplicates
 
 
 class BaseIterator:
-    
-    def __init__(self, instance, opt, warmstart_file="warmstart.soln", variable_map=None, verbose=False):
+    def __init__(
+        self,
+        instance,
+        opt,
+        warmstart_file="warmstart.soln",
+        variable_map=None,
+        verbose=False,
+    ):
         """
         This class is used to solve a pyomo model by successive itarations
-        
+
         :param instance: a pyomo instance
         :param opt: a pyomo solver
         :param variable_map: the variable map to use (see set_variable_map for details)
@@ -26,7 +32,7 @@ class BaseIterator:
             self.variable_map = variable_map
         self.warmstart_file = warmstart_file
         self.iteration = {}
-        
+
     def set_variable_map(self, new_map):
         """
         Set a new variable map.
@@ -34,23 +40,23 @@ class BaseIterator:
         The indices are a list of set names in the same order as in the variable.
         It is important to always give the same names to the indices which will be iterated over. The other set names
         do not matter.
-        
+
         map_example = {
         "vVar1":["sSet1", "sSet2", "sOtherSet"]
         "vVar2":["sSet1"]
         }
-        
+
         At each iteration, the variables containing one of the free index will be free and the one containing
          fixed index will be fixed.
-        
+
         :param new_map: the new variable_map
         """
         self.variable_map = new_map
-    
+
     def get_free_keys(self, var_name, free_indices, fixed_indices):
         """
         Get all the keys (combinations of indices) of a variable that should be free.
-        
+
         :param var_name: name of the variable
         :param free_indices: dict of free indices
         :param fixed_indices:  dict of fixed indices
@@ -65,18 +71,20 @@ class BaseIterator:
         for i in range(var_dim):
             if var_indices[i] in free_indices.keys():
                 indices_to_free[i] = free_indices[var_indices[i]]
-                all_indices[i] = free_indices[var_indices[i]] + fixed_indices[var_indices[i]]
+                all_indices[i] = (
+                    free_indices[var_indices[i]] + fixed_indices[var_indices[i]]
+                )
             else:
                 indices_to_free[i] = []
                 all_indices[i] = no_duplicates([k[i] for k in variable.keys()])
-        
+
         for i in range(var_dim):
             combinations = deepcopy(all_indices)
             combinations[i] = indices_to_free[i]
             free_keys += existing_indices(variable, *combinations)
-            
+
         return free_keys
-    
+
     def set_variables_states(self, free_indices, fixed_indices):
         """
         Set the variables as fixed or free depending on their indices and the dicts of free and fixed indices.
@@ -87,19 +95,21 @@ class BaseIterator:
         - free * ignored = fixed
         - fixed * ignored = fixed
         - ignored * ignored = fixed
-        
+
         :param free_indices: indices that will be free in that iterations.
         :param fixed_indices: indices that have already been fixed in previous iterations.
         :return:
         """
-        
+
         fix_variable_list([self.get_variable(v) for v in self.variable_map])
         free_keys = {}
-        
+
         for var_name in self.variable_map:
-            free_keys[var_name] = self.get_free_keys(var_name, free_indices, fixed_indices)
+            free_keys[var_name] = self.get_free_keys(
+                var_name, free_indices, fixed_indices
+            )
             free_variable(self.get_variable(var_name), free_keys[var_name])
-        
+
         return free_keys
 
     def get_variable(self, var_name):
@@ -110,49 +120,56 @@ class BaseIterator:
         :return: the pyomo variable object
         """
         return self.instance.__dict__[var_name]
-    
+
     def get_constraint(self, con_name):
         """
         Transform a constraint name into the corresponding pyomo constraint object
-        
+
         :param con_name: the constraint name
         :return: the pyomo constraint object
         """
         return self.instance.__dict__[con_name]
-    
+
     def get_instance_constraint_list(self):
         """
         :return: The list of constraints from the instance.
         """
-        return [self.get_constraint(con) for con in self.instance.component_map(Constraint)]
-    
+        return [
+            self.get_constraint(con) for con in self.instance.component_map(Constraint)
+        ]
+
     def get_instance_var_list(self):
         """
         :return: The list of variables from the instance.
         """
         return [self.get_variable(v) for v in self.instance.component_map(Var)]
-    
+
     def deactivate_unused_constraints(self, exclude=None):
         """
         Detect fixed constraints indices (all their variable are fixed) and deactivate them.
-        
+
         :param exclude a list of constraint names not to activate.
-        
+
         :return: nothing (modify the instance)
         """
         if exclude is not None:
             dont_activate = [self.get_constraint(e) for e in exclude]
         else:
             dont_activate = []
-        
+
         constraint_list = self.get_instance_constraint_list()
         for const in constraint_list:
             if const not in dont_activate:
                 activate_constraint(const)
                 for k in const.keys():
-                    if len(list(identify_variables(const[k].body, include_fixed=False))) == 0:
+                    if (
+                        len(
+                            list(identify_variables(const[k].body, include_fixed=False))
+                        )
+                        == 0
+                    ):
                         const[k].deactivate()
-    
+
     def set_var_initial_values(self, var_values=None):
         """
         Set all the variables to 0 or to an optional value.
@@ -162,7 +179,7 @@ class BaseIterator:
             "vVar2": {(0, 0): 1, (0, 3): 1}
         }
         Variables and indices not in var_values will be set to 0.
-        
+
         :param var_values: a dict with variables names, indices and values (optional)
         :return: nothing (update the instance values)
         """
@@ -170,13 +187,13 @@ class BaseIterator:
         for v in var_list:
             for k in v.keys():
                 v[k] = 0
-                
+
         if var_values is not None:
             for v_name in var_values.keys():
                 v = self.get_variable(v_name)
                 for k, val in var_values[v_name].items():
                     v[k] = val
-    
+
     def free_everything(self):
         """
         Free all the variables and activate all the constraints
@@ -185,12 +202,12 @@ class BaseIterator:
         all_con = self.get_instance_constraint_list()
         free_variable_list(all_var)
         activate_constraint_list(all_con)
-    
+
     def show_solution(self, free_keys):
         """
         Show the solution for the variables and keys that were free in this iteration.
         Only show non zero values.
-        
+
         :param free_keys: a dict in the format: free_keys = {"var_name":[list of free keys], var_name2"...}
         :return:
         """
@@ -205,30 +222,34 @@ class BaseIterator:
     def solve(self):
         """
         Solve the problem with a warmstart.
-        
+
         :return: resolution status and objective function.
         """
-    
+
         write_cbc_warmstart_file(self.warmstart_file, self.instance, self.opt)
-        result = self.opt.solve(self.instance, tee=self.verbose, warmstart=True,
-                                warmstart_file=self.warmstart_file)
+        result = self.opt.solve(
+            self.instance,
+            tee=self.verbose,
+            warmstart=True,
+            warmstart_file=self.warmstart_file,
+        )
         status = get_status(result)
         obj = self.instance.f_obj()
-    
+
         return status, obj
-    
+
     def iterate(self, free_indices, fixed_indices, excluded_constraints=None):
         """
         Iterate one time with the given free and fixed indices.
         Free and fixed indices may include several sets and must include exactly the same sets.
-        
+
         free_indices_example = {
             "sSet1": [4,5,6],
             "sSet2": [10,11,12]
         }
-        
+
         The indices which are not in free or fixed indices are ignored for the given sets (they always stay fixed)
-        
+
         If a variable depends on multiple sets of free/fixed indices, the following rule apply:
         - free * free = free
         - free * fixed = free
@@ -236,7 +257,7 @@ class BaseIterator:
         - free * ignored = fixed
         - fixed * ignored = fixed
         - ignored * ignored = fixed
-        
+
         :param free_indices: indices that will be free in that iterations.
         :param fixed_indices: indices that have already been fixed in previous iterations.
         :return: (tuple) status and obj of the resolution.
@@ -245,11 +266,10 @@ class BaseIterator:
         self.deactivate_unused_constraints(exclude=excluded_constraints)
 
         status, obj = self.solve()
-        #self.show_solution(free_keys)
-        
+        # self.show_solution(free_keys)
+
         return status, obj
-    
-    
+
     # Work in progress:
     """
     def get_iterative_solution(self, complete_sets, iter_rule_dict=None):
@@ -293,5 +313,3 @@ class BaseIterator:
         print("not implemented yet")
         pass
     """
-        
-        

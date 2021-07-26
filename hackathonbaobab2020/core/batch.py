@@ -25,8 +25,7 @@ class Batch(object):
     /PATH/TO/BATCH/scenarioX/instanceY/
 
     /PATH/TO/BATCH/scenario1/instance1/ is assumed to be the path for an experiment.
-    i.e., exp.Experiment.from_dir('/PATH/TO/BATCH/scenario1/instance1/') should work.
-    names are obtained by inspection so it can be any name for scenario or instance.
+        names are obtained by inspection so it can be any name for scenario or instance.
 
     if no_scenario is True:
     /PATH/TO/BATCH/instance1/
@@ -62,14 +61,18 @@ class Batch(object):
         scenario_paths = {s: os.path.join(self.path, s) for s in scenarios}
         if self.no_scenario:
             return sd.SuperDict.from_dict(scenario_paths)
-        scenario_instances = {s: os.listdir(v) for s, v in scenario_paths.items() if os.path.isdir(v)}
+        scenario_instances = {
+            s: os.listdir(v) for s, v in scenario_paths.items() if os.path.isdir(v)
+        }
         scenario_paths_in, instances_paths_in = self.re_make_paths(scenario_instances)
         return sd.SuperDict.from_dict(instances_paths_in).to_dictup()
 
     def re_make_paths(self, scenario_instances):
         scenario_paths = {s: os.path.join(self.path, s) for s in scenario_instances}
-        instances_paths = {s: {i: os.path.join(scenario_paths[s], i) for i in instances}
-                           for s, instances in scenario_instances.items()}
+        instances_paths = {
+            s: {i: os.path.join(scenario_paths[s], i) for i in instances}
+            for s, instances in scenario_instances.items()
+        }
         return scenario_paths, instances_paths
 
     def get_cases(self):
@@ -82,15 +85,15 @@ class Batch(object):
 
     def get_solver(self):
         opt_info = self.get_options()
-        available_solvers = ['CPLEX', 'GUROBI', 'CBC']
-        default = 'CPLEX'
+        available_solvers = ["CPLEX", "GUROBI", "CBC"]
+        default = "CPLEX"
         try:
             el = list(opt_info.keys())[0]
-            engine = opt_info[el]['solver']
+            engine = opt_info[el]["solver"]
         except:
             return default
-        if '.' in engine:
-            engine, solver = engine.split('.')
+        if "." in engine:
+            engine, solver = engine.split(".")
         else:
             solver = engine
         if solver in available_solvers:
@@ -107,30 +110,34 @@ class Batch(object):
 
         solver = self.get_solver()
 
-        self.logs = \
-            self.get_instances_paths(). \
-            vapply(lambda v: os.path.join(v, 'results.log')).\
-            clean(func=os.path.exists). \
-            vapply(lambda v: ol.get_info_solver(v, solver, get_progress=get_progress))
+        self.logs = (
+            self.get_instances_paths()
+            .vapply(lambda v: os.path.join(v, "results.log"))
+            .clean(func=os.path.exists)
+            .vapply(lambda v: ol.get_info_solver(v, solver, get_progress=get_progress))
+        )
         return self.logs
 
     def get_json(self, name):
         load_data = di.load_data
 
-        return \
-            self.get_instances_paths().\
-            vapply(lambda v: os.path.join(v, name)). \
-            vapply(load_data). \
-            clean(). \
-            vapply(sd.SuperDict.from_dict)
+        return (
+            self.get_instances_paths()
+            .vapply(lambda v: os.path.join(v, name))
+            .vapply(load_data)
+            .clean()
+            .vapply(sd.SuperDict.from_dict)
+        )
 
     def get_errors(self):
         if self.errors is not None:
             return self.errors
 
-        self.errors = self.get_cases().\
-            vapply(lambda v: v.check_solution().to_lendict().values()).\
-            vapply(sum)
+        self.errors = (
+            self.get_cases()
+            .vapply(lambda v: v.check_solution().to_lendict().values())
+            .vapply(sum)
+        )
         return self.errors
 
     def get_objective_function(self):
@@ -139,37 +146,37 @@ class Batch(object):
     def get_options(self):
         if self.options is not None:
             return self.options
-        self.options = self.get_json('options.json')
+        self.options = self.get_json("options.json")
         return self.options
 
     def get_errors_df(self):
         errors = self.get_errors()
-        return self.format_df(errors).rename(columns={0: 'errors'})
+        return self.format_df(errors).rename(columns={0: "errors"})
 
     def get_seeds(self):
         if self.seeds is not None:
             return self.seeds
-        self.seeds = self.get_options().get_property('simulation').get_property('seed')
+        self.seeds = self.get_options().get_property("simulation").get_property("seed")
         return self.seeds
 
     def format_df(self, table):
         seeds = self.get_seeds()
-        table = table.to_df(orient='index')
-        axis_name = 'name'
+        table = table.to_df(orient="index")
+        axis_name = "name"
         if not self.no_scenario:
             table.index = pd.MultiIndex.from_tuples(table.index)
-            axis_name = ('scenario', 'name')
-        table['instance'] = table.index.map(seeds)
+            axis_name = ("scenario", "name")
+        table["instance"] = table.index.map(seeds)
         return table.rename_axis(axis_name).reset_index()
 
     def get_log_df(self, **kwargs):
         log_info = self.get_logs(**kwargs)
         table = self.format_df(log_info)
 
-        for name in ['matrix', 'presolve', 'matrix_post']:
+        for name in ["matrix", "presolve", "matrix_post"]:
             try:
                 aux_table = table[name].apply(pd.Series)
-                aux_table.columns = [name + '_' + c for c in aux_table.columns]
+                aux_table.columns = [name + "_" + c for c in aux_table.columns]
                 table = pd.concat([table, aux_table], axis=1)
             except:
                 pass
@@ -178,17 +185,37 @@ class Batch(object):
 
     def get_status_df(self):
         table = self.get_log_df()
-        vars_extract = ['scenario', 'name', 'sol_code', 'status_code',
-                        'time', 'gap', 'best_bound', 'best_solution']
+        vars_extract = [
+            "scenario",
+            "name",
+            "sol_code",
+            "status_code",
+            "time",
+            "gap",
+            "best_bound",
+            "best_solution",
+        ]
 
-        master = \
-            pd.DataFrame({'sol_code': [ol.LpSolutionIntegerFeasible, ol.LpSolutionOptimal,
-                                       ol.LpSolutionInfeasible, ol.LpSolutionNoSolutionFound],
-                          'status': ['IntegerFeasible', 'Optimal', 'Infeasible', 'NoIntegerFound']})
+        master = pd.DataFrame(
+            {
+                "sol_code": [
+                    ol.LpSolutionIntegerFeasible,
+                    ol.LpSolutionOptimal,
+                    ol.LpSolutionInfeasible,
+                    ol.LpSolutionNoSolutionFound,
+                ],
+                "status": [
+                    "IntegerFeasible",
+                    "Optimal",
+                    "Infeasible",
+                    "NoIntegerFound",
+                ],
+            }
+        )
 
-        status_df = table.filter(vars_extract).merge(master, on='sol_code')
+        status_df = table.filter(vars_extract).merge(master, on="sol_code")
 
-        status_df['gap_abs'] = status_df.best_solution - status_df.best_bound
+        status_df["gap_abs"] = status_df.best_solution - status_df.best_bound
         return status_df
 
     def list_experiments(self, exp_list=None, get_log_info=True, get_exp_info=True):
@@ -240,13 +267,14 @@ class ZipBatch(Batch):
     """
     Only difference is it's contained inside a zip file.
     """
+
     def __init__(self, path, *args, **kwargs):
         name, ext = os.path.splitext(path)
-        zip_ext = '.zip'
+        zip_ext = ".zip"
         if not ext:
             path = name + zip_ext
         elif ext != zip_ext:
-            raise ValueError('Only zip is supported')
+            raise ValueError("Only zip is supported")
         super().__init__(path, *args, **kwargs)
 
     def get_instances_paths(self):
@@ -257,14 +285,10 @@ class ZipBatch(Batch):
             keys_positions = 1
         zipobj = zipfile.ZipFile(self.path)
         all_files = tl.TupList(di.dirs_in_zip(zipobj))
-        scenario_instances = \
-            all_files.\
-                vfilter(lambda f: f.count("/") == num_slashes)
-        keys = \
-            scenario_instances.\
-            vapply(str.split, '/').\
-            vapply(tuple).\
-            take(keys_positions)
+        scenario_instances = all_files.vfilter(lambda f: f.count("/") == num_slashes)
+        keys = (
+            scenario_instances.vapply(str.split, "/").vapply(tuple).take(keys_positions)
+        )
         result_dict = sd.SuperDict(zip(keys, scenario_instances))
         if self.scenarios:
             scenarios = set(self.scenarios)
@@ -296,25 +320,30 @@ class ZipBatch(Batch):
                 return 0
 
         func_to_get_log = ol.get_info_solver
-        filename = '/results.log'
+        filename = "/results.log"
 
-        self.logs = \
-            self.get_instances_paths(). \
-            vapply(lambda v: v + filename).\
-            vapply(_read_zip). \
-            clean(). \
-            vapply(lambda x: str(x, 'utf-8')). \
-            vapply(lambda v: func_to_get_log(v, solver, get_progress=get_progress, content=True))
+        self.logs = (
+            self.get_instances_paths()
+            .vapply(lambda v: v + filename)
+            .vapply(_read_zip)
+            .clean()
+            .vapply(lambda x: str(x, "utf-8"))
+            .vapply(
+                lambda v: func_to_get_log(
+                    v, solver, get_progress=get_progress, content=True
+                )
+            )
+        )
         return self.logs
 
     def get_json(self, name):
         zipobj = zipfile.ZipFile(self.path)
         load_data = lambda v: di.load_data_zip(zipobj=zipobj, path=v)
 
-        return \
-            self.get_instances_paths().\
-            vapply(lambda v: v + '/' + name). \
-            vapply(load_data). \
-            clean(). \
-            vapply(sd.SuperDict.from_dict)
-
+        return (
+            self.get_instances_paths()
+            .vapply(lambda v: v + "/" + name)
+            .vapply(load_data)
+            .clean()
+            .vapply(sd.SuperDict.from_dict)
+        )

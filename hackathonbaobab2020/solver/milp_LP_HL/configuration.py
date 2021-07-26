@@ -1,6 +1,3 @@
-
-
-
 # parameters of the resolution.
 SOLVER_PARAMETERS = {
     # maximum resolution time of each iteration.
