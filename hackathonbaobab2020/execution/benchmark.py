@@ -89,7 +89,6 @@ def solve_all():
     for solver in solvers:
         path_out = "{}/{}".format(root_dir, solver)
         path_to_dir = path_out
-        path_in = path
         solver_name = solver
         zipfile_name = path_to_dir + ".zip"
         for scenario in scenarios:
@@ -111,7 +110,6 @@ def compare():
         [get_table("{}/{}".format(root_dir, solver)) for solver in solvers]
     )
     table.to_csv("{}/{}".format(root_dir, "summary.csv"), index=False)
-    print(table.to_markdown())
     return table
 
 
@@ -171,7 +169,8 @@ def graphs(table):
 
     # relative optimality gap
     optimal = table[table.solver == "ortools"][["name", "objective"]]
-    data = table.merge(optimal, on="name")
+    filt_data = table[table.errors > 0]
+    data = filt_data.merge(optimal, on="name")
     data["gap"] = (data.objective_x - data.objective_y) / data.objective_y * 100
     g = sns.catplot(x="solver", y="gap", data=data)
     plt.savefig(root_dir + "/gap.png")

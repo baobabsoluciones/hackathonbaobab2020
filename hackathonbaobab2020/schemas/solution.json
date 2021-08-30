@@ -18,9 +18,9 @@
 					}
 				},
 				"required": [
-					"period",
+					"job",
 					"mode",
-					"job"
+					"period"
 				]
 			}
 		}
