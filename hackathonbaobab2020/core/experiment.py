@@ -5,15 +5,20 @@ from .solution import Solution
 from . import tools as di
 from zipfile import ZipFile
 from typing import List, Tuple
+from cornflow_client import ExperimentCore
 
 
-class Experiment(object):
+class Experiment(ExperimentCore):
     def __init__(self, instance: Instance, solution: Solution):
-        self.instance = instance
+        super().__init__(instance, solution)
         if solution is None:
             solution = Solution(pt.SuperDict())
         self.solution = solution
         return
+
+    @property
+    def instance(self) -> Instance:
+        return self._instance
 
     @classmethod
     def from_json(
