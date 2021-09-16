@@ -1,13 +1,21 @@
 import pytups as pt
 import re
-import json
-from ..schemas import check_instance
+from ..schemas import check_instance, instance
 from typing import List
+from cornflow_client import InstanceCore
+from pytups import SuperDict
 
 
-class Instance(object):
-    def __init__(self, data: dict):
-        self.data = pt.SuperDict.from_dict(data)
+class Instance(InstanceCore):
+    schema = instance
+
+    @property
+    def data(self) -> SuperDict:
+        return self._data
+
+    @data.setter
+    def data(self, value: SuperDict):
+        self._data = value
 
     @classmethod
     def from_mm(cls, path: str, content: List[str] = None) -> "Instance":
@@ -111,18 +119,6 @@ class Instance(object):
             durations=durations.to_dictdict(),
         )
         return cls(data)
-
-    @classmethod
-    def from_json(cls, path: str) -> "Instance":
-        with open(path, "r") as f:
-            data_json = json.load(f)
-        return cls.from_dict(data_json)
-
-    def to_json(self, path: str) -> None:
-        data = self.to_dict()
-        with open(path, "w") as f:
-            json.dump(data, f, indent=4, sort_keys=True)
-        return
 
     @staticmethod
     def is_resource_renewable(resource: dict) -> bool:

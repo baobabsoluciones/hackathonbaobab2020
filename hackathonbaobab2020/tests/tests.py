@@ -5,7 +5,7 @@ print(prev_dir)
 sys.path.insert(1, prev_dir)
 import unittest
 import shutil
-from hackathonbaobab2020 import solve_zip, Experiment
+from hackathonbaobab2020 import solve_zip, Experiment, HackathonApp
 
 
 class BaseSolverTest:
@@ -78,6 +78,20 @@ class TestIterator1(BaseSolverTest.HackathonTests):
 
 class TestLoop_solver(BaseSolverTest.HackathonTests):
     solver = "loop_EJ"
+
+
+class TestApp(unittest.TestCase):
+    def test_app(self):
+        app = HackathonApp()
+        solvers = ["default", "ortools"]
+        for solver in solvers:
+            config = dict(solver=solver, timeLimit=30)
+            for case in app.test_cases:
+                sol, log_txt, log = app.solve(case, config)
+                instance = app.instance.from_dict(case)
+                solution = app.solution.from_dict(sol)
+                experiment = Experiment(instance, solution)
+                experiment.check_solution()
 
 
 class TestFail(Exception):
