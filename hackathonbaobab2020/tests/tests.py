@@ -5,8 +5,7 @@ print(prev_dir)
 sys.path.insert(1, prev_dir)
 import unittest
 import shutil
-from hackathonbaobab2020 import solve_zip, Experiment
-from hackathonbaobab2020 import HackathonApp
+from hackathonbaobab2020 import solve_zip, Experiment, HackathonApp
 
 
 class BaseSolverTest:
