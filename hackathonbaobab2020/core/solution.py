@@ -5,7 +5,7 @@ from typing import List, Dict
 from cornflow_client import SolutionCore
 from pytups import SuperDict
 
-_solutionHint = Dict[str, List[Dict[str, id]]]
+_solutionHint = Dict[str, List[Dict[str, int]]]
 
 
 class Solution(SolutionCore):
