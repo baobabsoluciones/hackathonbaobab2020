@@ -15,7 +15,7 @@ packages = [
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-install_requires = ["pytups", "click", "pandas", "orloge", "jsonschema"]
+install_requires = ["click", "pandas", "orloge", "cornflow_client"]
 
 extras_require = {
     "benchmark": ["tabulate", "pygount", "plotly", "seaborn"],
@@ -24,7 +24,7 @@ extras_require = {
 
 kwargs = {
     "name": "hackathonbaobab2020",
-    "version": "0.98.0",
+    "version": "0.98.1",
     "packages": packages,
     "description": "Hackathon 2020 at baobab soluciones",
     "long_description": long_description,
