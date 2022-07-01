@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "properties": {
+    "successors": {
+      "type": "array",
+      "title": "Successors",
+      "description": "Table with information about the jobs that start before all of their predecessors finish.",
+      "is_warning": false,
+      "items": {
+        "type": "object",
+        "properties": {
+          "job1": {
+            "type": "integer",
+            "title": "First job",
+            "description": "The job that ends after the start of the other job."
+          },
+          "job2": {
+            "type": "integer",
+            "title": "Second job",
+            "description": "The job that starts before the end of the other job"
+          },
+          "difference": {
+            "type": "number",
+            "title": "Time difference",
+            "description": "The delay between the end of the first job and the start of the second job"
+          }
+        },
+        "required": [
+          "job1",
+          "job2",
+          "difference"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "resources_nr": {
+      "type": "array",
+      "title": "Non-renewable resources",
+      "description": "Table with the information about the excess use of non-renewable resources.",
+      "is_warning": false,
+      "items": {
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "string",
+            "title": "Resource",
+            "description": "The unique identifier of the resource"
+          },
+          "quantity": {
+            "type": "number",
+            "title": "Quantity",
+            "description": "The quantity of the resource that was used while it was unavailable."
+          }
+        },
+        "required": [
+          "resource", "quantity"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "resources_r": {
+      "type": "array",
+      "title": "Renewable resources",
+      "description": "Table with information about the periods where the consumption of renewable resources exceeds their availabilities.",
+      "is_warning": false,
+      "items": {
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "string",
+            "title": "Resource",
+            "description": "The unique identifier of the resource"
+          },
+          "period": {
+            "type": "integer",
+            "title": "Period",
+            "description": "The timeslot during which the resource is used in excess."
+          },
+          "quantity": {
+            "type": "number",
+            "title": "Quantity",
+            "description": "The quantity that was consumed in excess"
+          }
+        },
+        "required": ["resource", "period", "quantity"],
+        "additionalProperties": false
+      }
+    },
+    "all_jobs_once": {
+      "type": "array",
+      "title": "All jobs once",
+      "description": "Table with information about the jobs that were never executed.",
+      "is_warning": false,
+      "items": {
+        "type": "object",
+        "properties": {
+          "job": {
+            "type": "integer",
+            "title": "Job",
+            "description": "The unique identifier of the missing job"
+          }
+        },
+        "required": ["job"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [],
+  "additionalProperties": false
+}

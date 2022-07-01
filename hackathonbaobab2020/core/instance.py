@@ -2,12 +2,13 @@ import pytups as pt
 import re
 from ..schemas import check_instance, instance
 from typing import List
-from cornflow_client import InstanceCore
+from cornflow_client import InstanceCore, get_empty_schema
 from pytups import SuperDict
 
 
 class Instance(InstanceCore):
     schema = instance
+    schema_checks = get_empty_schema()
 
     @property
     def data(self) -> SuperDict:
