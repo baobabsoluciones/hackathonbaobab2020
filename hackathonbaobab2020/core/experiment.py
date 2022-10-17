@@ -6,9 +6,14 @@ from . import tools as di
 from zipfile import ZipFile
 from typing import List, Tuple
 from cornflow_client import ExperimentCore
+from cornflow_client.core.tools import load_json
 
 
 class Experiment(ExperimentCore):
+    schema_checks = load_json(
+        os.path.join(os.path.dirname(__file__), "../schemas/solution_checks.json")
+    )
+
     def __init__(self, instance: Instance, solution: Solution):
         super().__init__(instance, solution)
         if solution is None:
@@ -63,7 +68,12 @@ class Experiment(ExperimentCore):
         result = {k: func_list[k](**params) for k in list_tests}
         return pt.SuperDict({k: v for k, v in result.items() if v})
 
-    def check_successors(self, **params) -> pt.SuperDict[Tuple[int, int], int]:
+    def check_successors(self, **params) -> pt.TupList:
+        """
+        Checks that a job finishes before any of its successors starts.
+        Returns a TupList with format:
+        [{"job1": id_job1, "job2": id_job2, "difference": time_difference}, ...]
+        """
         succ = self.instance.data["jobs"].get_property("successors")
         durations = self.instance.data["durations"]
         solution = (
@@ -75,7 +85,7 @@ class Experiment(ExperimentCore):
         sol_start = solution.get("period", pt.SuperDict())
         sol_mode = solution.get("mode", pt.SuperDict())
         sol_finished = sol_start.kvapply(lambda k, v: v + durations[k][sol_mode[k]])
-        errors = pt.SuperDict()
+        errors = pt.TupList()
         for job, post_jobs in succ.items():
             if job not in sol_finished:
                 continue
@@ -83,12 +93,20 @@ class Experiment(ExperimentCore):
                 if job2 not in sol_start:
                     continue
                 if sol_finished[job] > sol_start[job2]:
-                    errors[job, job2] = sol_finished[job] - sol_start[job2]
+                    errors.append(
+                        {
+                            "job1": job,
+                            "job2": job2,
+                            "difference": sol_finished[job] - sol_start[job2],
+                        }
+                    )
         return errors
 
-    def check_resources_nonrenewable(self, **params) -> pt.SuperDict[str, int]:
+    def check_resources_nonrenewable(self, **params) -> pt.TupList:
         """
         Checks non-renewable resource usage and reports violations
+        Returns a TupList with format:
+        [{"resource": id_resource, "quantity": excess}, ...]
         """
         # non renewables are counted once per job
         sol_mode = self.get_modes()
@@ -106,10 +124,17 @@ class Experiment(ExperimentCore):
             resource_usage_N.kfilter(lambda k: k not in renewable_res)
             .kvapply(lambda k, v: avail[k] - v)
             .vfilter(lambda v: v < 0)
+            .to_tuplist()
+            .vapply(lambda v: {"resource": v[0], "quantity": v[1]})
         )
         return error_N
 
-    def check_resources_renewable(self, **params) -> pt.SuperDict[Tuple[str, int], int]:
+    def check_resources_renewable(self, **params) -> pt.TupList:
+        """
+        Checks that the use of renewable resources never exceed the quantity available at each period
+        Returns a tuplist with format:
+        [{"resource": id_resource, "period": id_period, "quantity": quantity}, ...]
+        """
         sol_mode = self.get_modes()
         usage = self.instance.data["needs"]
         resource_usage = sol_mode.kvapply(lambda k, v: usage[k][v])
@@ -129,8 +154,11 @@ class Experiment(ExperimentCore):
                 for resource, value in resource_usage[job].items():
                     if resource in renewable_res:
                         consumption_rt[resource, period] += value
-        errors_R = consumption_rt.kvapply(lambda k, v: avail[k[0]] - v).vfilter(
-            lambda v: v < 0
+        errors_R = (
+            consumption_rt.kvapply(lambda k, v: avail[k[0]] - v)
+            .vfilter(lambda v: v < 0)
+            .to_tuplist()
+            .vapply(lambda v: {"resource": v[0], "period": v[1], "quantity": v[2]})
         )
         return errors_R
 
@@ -140,9 +168,10 @@ class Experiment(ExperimentCore):
             return 0
         return max(finished_time)
 
-    def all_jobs_once(self, **params) -> pt.SuperDict[int, int]:
+    def all_jobs_once(self, **params) -> pt.TupList:
+        """Checks that all jobs are executed at least once"""
         missing = self.instance.data["jobs"].keys() - self.solution.data.keys()
-        return pt.SuperDict({k: 1 for k in missing})
+        return pt.TupList([{"job": k} for k in missing])
 
     def get_start_times(self) -> pt.SuperDict[int, int]:
         """

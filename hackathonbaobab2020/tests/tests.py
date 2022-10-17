@@ -5,6 +5,7 @@ print(prev_dir)
 sys.path.insert(1, prev_dir)
 import unittest
 import shutil
+from jsonschema import Draft7Validator
 from hackathonbaobab2020 import solve_zip, Experiment, HackathonApp
 
 
@@ -87,11 +88,14 @@ class TestApp(unittest.TestCase):
         for solver in solvers:
             config = dict(solver=solver, timeLimit=30)
             for case in app.test_cases:
-                sol, log_txt, log = app.solve(case, config)
+                sol, sol_checks, inst_checks, log_txt, log = app.solve(case, config)
                 instance = app.instance.from_dict(case)
                 solution = app.solution.from_dict(sol)
                 experiment = Experiment(instance, solution)
                 experiment.check_solution()
+                validator = Draft7Validator(experiment.schema_checks)
+                if not validator.is_valid(sol_checks):
+                    raise TestFail("The solution checks have invalid format")
 
 
 class TestFail(Exception):
