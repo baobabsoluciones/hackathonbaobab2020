@@ -93,7 +93,13 @@ class Experiment(ExperimentCore):
                 if job2 not in sol_start:
                     continue
                 if sol_finished[job] > sol_start[job2]:
-                    errors.append({"job1": job, "job2": job2, "difference": sol_finished[job] - sol_start[job2]})
+                    errors.append(
+                        {
+                            "job1": job,
+                            "job2": job2,
+                            "difference": sol_finished[job] - sol_start[job2],
+                        }
+                    )
         return errors
 
     def check_resources_nonrenewable(self, **params) -> pt.TupList:
@@ -148,9 +154,12 @@ class Experiment(ExperimentCore):
                 for resource, value in resource_usage[job].items():
                     if resource in renewable_res:
                         consumption_rt[resource, period] += value
-        errors_R = consumption_rt.kvapply(lambda k, v: avail[k[0]] - v).vfilter(
-            lambda v: v < 0
-        ).to_tuplist().vapply(lambda v: {"resource": v[0], "period": v[1], "quantity": v[2]})
+        errors_R = (
+            consumption_rt.kvapply(lambda k, v: avail[k[0]] - v)
+            .vfilter(lambda v: v < 0)
+            .to_tuplist()
+            .vapply(lambda v: {"resource": v[0], "period": v[1], "quantity": v[2]})
+        )
         return errors_R
 
     def get_objective(self, **params) -> int:
@@ -160,7 +169,7 @@ class Experiment(ExperimentCore):
         return max(finished_time)
 
     def all_jobs_once(self, **params) -> pt.TupList:
-        """ Checks that all jobs are executed at least once """
+        """Checks that all jobs are executed at least once"""
         missing = self.instance.data["jobs"].keys() - self.solution.data.keys()
         return pt.TupList([{"job": k} for k in missing])
 
