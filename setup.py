@@ -24,7 +24,7 @@ extras_require = {
 
 kwargs = {
     "name": "hackathonbaobab2020",
-    "version": "0.98.1",
+    "version": "1.0.0",
     "packages": packages,
     "description": "Hackathon 2020 at baobab soluciones",
     "long_description": long_description,
