@@ -89,8 +89,8 @@ class TestApp(unittest.TestCase):
         solvers = ["default", "ortools"]
         for solver in solvers:
             config = dict(solver=solver, timeLimit=30)
-            for test_case, data in app.test_cases.items():
-                case_instance = data["instance"]
+            for test_case in app.test_cases:
+                case_instance = test_case["instance"]
                 sol, sol_checks, inst_checks, log_txt, log = app.solve(
                     case_instance, config
                 )

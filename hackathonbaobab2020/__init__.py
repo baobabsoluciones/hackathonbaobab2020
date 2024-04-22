@@ -32,17 +32,20 @@ class HackathonApp(ApplicationCore):
 
     @property
     def test_cases(self) -> List[Dict]:
-        return {
-            "example_1": {
+        return [
+            {
+                "name": "J102_4",
                 "instance": get_test_instance("j10.mm.zip", "j102_4.mm").to_dict(),
-                "description": "Test instance 1",
+                "description": "Test instance with 12 jobs and 4 resources and up to 3 modes per job.",
             },
-            "example_2": {
+            {
+                "name": "J102_5",
                 "instance": get_test_instance("j10.mm.zip", "j102_5.mm").to_dict(),
-                "description": "Test instance 2",
+                "description": "Test instance with 12 jobs, 4 resources and up to 3 modes per job.",
             },
-            "example_3": {
+            {
+                "name": "J102_6",
                 "instance": get_test_instance("j10.mm.zip", "j102_6.mm").to_dict(),
-                "description": "Test instance 3",
+                "description": "Test instance with 12 jobs, 4 resources and up to 3 modes per job.",
             },
-        }
+        ]
