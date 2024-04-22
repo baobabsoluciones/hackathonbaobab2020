@@ -21,7 +21,9 @@ class BaseSolverTest:
             shutil.rmtree(self.path_out)
 
         def run_scenario_instance(self, scenario, instance):
-            path_in = os.path.dirname(os.path.abspath(__file__))
+            path_in = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "../data/"
+            )
             try:
                 solve_zip(
                     zip_name="./{}.zip".format(scenario),
@@ -87,9 +89,12 @@ class TestApp(unittest.TestCase):
         solvers = ["default", "ortools"]
         for solver in solvers:
             config = dict(solver=solver, timeLimit=30)
-            for case in app.test_cases:
-                sol, sol_checks, inst_checks, log_txt, log = app.solve(case, config)
-                instance = app.instance.from_dict(case)
+            for test_case, data in app.test_cases.items():
+                case_instance = data["instance"]
+                sol, sol_checks, inst_checks, log_txt, log = app.solve(
+                    case_instance, config
+                )
+                instance = app.instance.from_dict(case_instance)
                 solution = app.solution.from_dict(sol)
                 experiment = Experiment(instance, solution)
                 experiment.check_solution()
@@ -103,5 +108,4 @@ class TestFail(Exception):
 
 
 if __name__ == "__main__":
-
     unittest.main()

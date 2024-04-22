@@ -32,9 +32,17 @@ class HackathonApp(ApplicationCore):
 
     @property
     def test_cases(self) -> List[Dict]:
-        options = [
-            ("j10.mm.zip", "j102_4.mm"),
-            ("j10.mm.zip", "j102_5.mm"),
-            ("j10.mm.zip", "j102_6.mm"),
-        ]
-        return [get_test_instance(*op).to_dict() for op in options]
+        return {
+            "example_1": {
+                "instance": get_test_instance("j10.mm.zip", "j102_4.mm").to_dict(),
+                "description": "Test instance 1",
+            },
+            "example_2": {
+                "instance": get_test_instance("j10.mm.zip", "j102_5.mm").to_dict(),
+                "description": "Test instance 2",
+            },
+            "example_3": {
+                "instance": get_test_instance("j10.mm.zip", "j102_6.mm").to_dict(),
+                "description": "Test instance 3",
+            },
+        }
