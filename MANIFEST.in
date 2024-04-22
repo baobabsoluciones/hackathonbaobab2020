@@ -10,3 +10,4 @@ include hackathonbaobab2020/execution/*.py
 include hackathonbaobab2020/solvers/*.py
 include hackathonbaobab2020/schemas/*
 include hackathonbaobab2020/tests/*
+include hackathonbaobab2020/data/*
