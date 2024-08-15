@@ -20,6 +20,7 @@ class Instance(InstanceCore):
 
     @classmethod
     def from_mm(cls, path: str, content: List[str] = None) -> "Instance":
+
         if content is None:
             with open(path, "r") as f:
                 content = f.readlines()
@@ -73,9 +74,13 @@ class Instance(InstanceCore):
         return cls(data)
 
     def to_dict(self) -> dict:
-
         res = self.data["resources"].values_l()
-        job = self.data["jobs"].values_l()
+        job = (
+            self.data["jobs"]
+            .get_property("successors")
+            .to_tuplist()
+            .vapply(lambda v: SuperDict(id=v[0], successor=v[1]))
+        )
         duration = (
             self.data["durations"]
             .to_dictup()
@@ -98,8 +103,14 @@ class Instance(InstanceCore):
     @classmethod
     def from_dict(cls, data_json: dict) -> "Instance":
         check_instance(data_json)
-
-        jobs = pt.SuperDict({v["id"]: v for v in data_json["jobs"]})
+        # sometimes a job has no successors, but we still want to have an element with an empty list
+        jobs_data = pt.TupList(data_json["jobs"])
+        all_jobs = (jobs_data.take("id") + jobs_data.take("successor")).to_set()
+        jobs = (
+            jobs_data.to_dict(result_col="successor", indices="id", is_list=True)
+            .fill_with_default(all_jobs, default=[])
+            .kvapply(lambda k, v: SuperDict(id=k, successors=v))
+        )
         res = pt.SuperDict({v["id"]: v for v in data_json["resources"]})
         needs = pt.SuperDict(
             {

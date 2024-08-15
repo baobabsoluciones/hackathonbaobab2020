@@ -112,7 +112,7 @@ class Milp1(Experiment):
         else:
             self.solution = Solution({})
 
-        return get_status_value(self.status)
+        return dict(get_status_value(self.status), status_sol=is_feasible(self.status))
 
     def print_instance(self):
         print("printing instance")

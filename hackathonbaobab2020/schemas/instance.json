@@ -28,14 +28,11 @@
 					"id": {
 						"type": "integer"
 					},
-					"successors": {
-						"type": "array",
-						"items": {
-							"type": "integer"
-						}
+					"successor": {
+						"type": "integer"
 					}
 				},
-				"required": ["id", "successors"]
+				"required": ["id", "successor"]
 			}
 		},
 		"needs": {

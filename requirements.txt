@@ -4,6 +4,7 @@ pandas
 orloge
 jsonschema
 cornflow_client
+numpy<2
 
 # solvers:
 pyomo

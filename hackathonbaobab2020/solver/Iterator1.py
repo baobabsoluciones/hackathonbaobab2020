@@ -134,7 +134,7 @@ class Iterator1(Experiment):
         else:
             self.solution = Solution({})
 
-        return get_status_value(self.status)
+        return dict(get_status_value(self.status), status_sol=is_feasible(self.status))
 
     def get_modes_order(self, current_resources=None):
 

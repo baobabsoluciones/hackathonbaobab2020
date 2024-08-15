@@ -2,6 +2,12 @@ from ortools.sat.python import cp_model
 from hackathonbaobab2020.core import Experiment, Solution
 import pytups as pt
 
+from cornflow_client.constants import (
+    ORTOOLS_STATUS_MAPPING,
+    SOLUTION_STATUS_INFEASIBLE,
+    SOLUTION_STATUS_FEASIBLE,
+)
+
 
 class CPModel1(Experiment):
     def __init__(self, instance, solution=None):
@@ -122,10 +128,16 @@ class CPModel1(Experiment):
         solver.parameters.max_time_in_seconds = options.get("timeLimit", 10)
         status = solver.Solve(model)
         if status not in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
-            return status
+            return dict(
+                status=ORTOOLS_STATUS_MAPPING.get(status),
+                status_sol=SOLUTION_STATUS_INFEASIBLE,
+            )
         start_sol = starts.vapply(solver.Value)
         mode_sol = job_mode.vapply(lambda v: solver.Value(v) + 1)
         _func = lambda x, y: dict(period=x, mode=y)
         solution = start_sol.sapply(func=_func, other=mode_sol)
         self.solution = Solution(solution)
-        return status
+        return dict(
+            status=ORTOOLS_STATUS_MAPPING.get(status),
+            status_sol=SOLUTION_STATUS_FEASIBLE,
+        )

@@ -53,9 +53,9 @@ def solve_zip(
         algo = solver(inst)
         start = timer()
         try:
-            status = algo.solve(options)
+            result = algo.solve(options)
         except Exception as e:
-            status = 0
+            result = dict(status=0, status_sol=0)
             with open(os.path.join(experiment_dir, "error.txt"), "w") as f:
                 f.write(str(e))
 
@@ -64,7 +64,7 @@ def solve_zip(
         _log = dict(
             time=timer() - start,
             solver=solver_name,
-            status=status_conv.get(status, "Unknown"),
+            status=status_conv.get(result["status"], "Unknown"),
         )
         _log.update(options)
         tools.write_json(_log, os.path.join(experiment_dir, "options.json"))

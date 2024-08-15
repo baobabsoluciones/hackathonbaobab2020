@@ -18,7 +18,7 @@ SOLVER_PARAMETERS = {
     # accepted relative gap (0.01 = 1%)
     "ratio": 0.01,
     # model tolerance
-    "primalT": 10 ** -7,
+    "primalT": 10**-7,
 }
 
 
@@ -935,7 +935,7 @@ class Fix_loop_solver(Experiment):
         else:
             self.solution = Solution({})
 
-        return get_status_value(self.status)
+        return dict(get_status_value(self.status), status_sol=is_feasible(self.status))
 
     def print_instance(self):
         print("printing instance")

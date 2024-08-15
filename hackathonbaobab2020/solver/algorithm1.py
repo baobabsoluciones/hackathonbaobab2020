@@ -1,6 +1,7 @@
 from hackathonbaobab2020.core import Experiment, Solution
 import copy
 import pytups as pt
+from cornflow_client.constants import STATUS_OPTIMAL, SOLUTION_STATUS_FEASIBLE
 
 
 class Algorithm(Experiment):
@@ -32,4 +33,4 @@ class Algorithm(Experiment):
                 solution[job] = dict(period=period, mode=mode)
                 period = period + durations[job][mode]
         self.solution = Solution(solution)
-        return 2
+        return dict(status=STATUS_OPTIMAL, status_sol=SOLUTION_STATUS_FEASIBLE)

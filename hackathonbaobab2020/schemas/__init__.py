@@ -21,7 +21,6 @@ def load_file(name):
 
 instance = load_file("instance.json")
 solution = load_file("solution.json")
-config = load_file("config.json")
 
 
 def check_instance(data):
@@ -30,7 +29,3 @@ def check_instance(data):
 
 def check_solution(data):
     return check_schema(solution, data)
-
-
-def check_config(data):
-    return check_schema(config, data)
