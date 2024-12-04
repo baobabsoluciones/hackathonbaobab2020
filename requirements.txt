@@ -3,7 +3,7 @@ click
 pandas
 orloge
 jsonschema
-cornflow_client
+cornflow-client
 
 # solvers:
 pyomo

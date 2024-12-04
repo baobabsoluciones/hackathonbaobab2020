@@ -121,6 +121,9 @@ class Instance(InstanceCore):
         )
         return cls(data)
 
+    def check(self):
+        return dict()
+    
     @staticmethod
     def is_resource_renewable(resource: dict) -> bool:
         if "type" in resource:
