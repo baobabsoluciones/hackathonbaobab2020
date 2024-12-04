@@ -56,7 +56,7 @@ class Experiment(ExperimentCore):
     def solve(self, options: dict):
         raise NotImplementedError("complete this!")
 
-    def check_solution(self, list_tests: List[str] = None, **params) -> pt.SuperDict:
+    def check(self, list_tests: List[str] = None, **params) -> pt.SuperDict:
         func_list = dict(
             successors=self.check_successors,
             resources_nr=self.check_resources_nonrenewable,
