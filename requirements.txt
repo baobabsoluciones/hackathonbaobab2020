@@ -15,3 +15,8 @@ tabulate
 pygount
 plotly
 seaborn
+
+# reports
+matplotlib
+jupyter
+quarto

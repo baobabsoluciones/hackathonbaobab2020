@@ -15,11 +15,12 @@ packages = [
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-install_requires = ["click", "pandas", "orloge", "cornflow_client"]
+install_requires = ["click", "pandas", "orloge", "cornflow_client", "tabulate", "pygount", "plotly", "seaborn", "pyomo", "ortools"]
 
+# we moved all extra_require to install_requires
 extras_require = {
-    "benchmark": ["tabulate", "pygount", "plotly", "seaborn"],
-    "solvers": ["pyomo", "ortools"],
+    "benchmark": [],
+    "solvers": [],
 }
 
 kwargs = {

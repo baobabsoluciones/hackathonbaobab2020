@@ -102,6 +102,12 @@ class TestApp(unittest.TestCase):
                 if not validator.is_valid(sol_checks):
                     raise TestFail("The solution checks have invalid format")
 
+    def test_table(self):
+        app = HackathonApp()
+
+        test_case = app.test_cases[0]
+        my_table = app.instance.from_dict(test_case["instance"]).to_table()
+
 
 class TestFail(Exception):
     pass

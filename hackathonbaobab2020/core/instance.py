@@ -1,9 +1,13 @@
 import pytups as pt
 import re
+
+from numpy.ma.core import indices
+
 from ..schemas import check_instance, instance
 from typing import List
 from cornflow_client import InstanceCore, get_empty_schema
 from pytups import SuperDict
+import pandas as pd
 
 
 class Instance(InstanceCore):
@@ -140,3 +144,25 @@ class Instance(InstanceCore):
 
     def get_renewable_resources(self) -> List[str]:
         return self.data["resources"].vfilter(self.is_resource_renewable).keys_l()
+
+    def get_jobs(self):
+        return self.data["jobs"]
+
+    def to_table(self):
+        my_data = self.to_dict()
+
+        # jobs = self.get_jobs()
+        job_dep = (
+            my_data["jobs"]
+            .to_dict(result_col="id", indices="successor", is_list=True)
+            .vapply(lambda v: str(v))
+            .to_tuplist()
+            .vapply(lambda v: {"job": v[0], "dependencies": v[1]})
+        )
+        pd.DataFrame.from_records(my_data["needs"]).pivot_table(
+            values="need", index=["job", "mode"], columns="resource"
+        ).reset_index()
+        pd.DataFrame.from_records(my_data["durations"])
+
+        pass
+        self.data["resources"]

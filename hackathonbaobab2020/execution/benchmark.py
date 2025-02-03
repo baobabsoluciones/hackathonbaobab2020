@@ -1,4 +1,4 @@
-from run_batch import solve_zip, get_table
+from .run_batch import solve_zip, get_table
 import zipfile
 import random as rn
 import os
